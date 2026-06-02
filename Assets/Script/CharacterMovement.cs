@@ -20,55 +20,45 @@ public class CharacterMovement : MonoBehaviour
 
     void Start() { }
 
-    // 【功能一】瞬移（把第二個參數改成 string，解決 Yarn 3.x 參數解析失敗的 Bug）
+    // 【功能一】瞬移
+    // 在 Yarn Spinner 中，如果 [YarnCommand] 放在非靜態方法上，
+    // 第一個參數會自動被 Yarn 用來尋找物件，因此 C# 方法不需要再接收物件名稱。
     [YarnCommand("teleport")]
-    public void TeleportCharacter(string nameParameter, string targetXStr)
+    public void TeleportCharacter(string targetXStr)
     {
-        if (nameParameter == gameObject.name)
+        // 將字串安全的轉換成 float 數字，如果失敗預設為 0
+        if (float.TryParse(targetXStr, out float targetX))
         {
-            // 將字串安全的轉換成 float 數字，如果失敗預設為 0
-            if (float.TryParse(targetXStr, out float targetX))
-            {
-                Vector2 currentPos = rectTransform.anchoredPosition;
-                currentPos.x = targetX;
-                rectTransform.anchoredPosition = currentPos;
-            }
-            else
-            {
-                Debug.LogError($"【瞬移錯誤】無法將輸入的座標 '{targetXStr}' 轉換成數字！");
-            }
+            Vector2 currentPos = rectTransform.anchoredPosition;
+            currentPos.x = targetX;
+            rectTransform.anchoredPosition = currentPos;
+        }
+        else
+        {
+            Debug.LogError($"【瞬移錯誤】無法將輸入的座標 '{targetXStr}' 轉換成數字！");
         }
     }
 
-    // 【功能二】開關角色功能（同樣改成 string 來接收 true/false，最安全）
+    // 【功能二】開關角色功能
     [YarnCommand("show")]
-    public void SetCharacterActive(string nameParameter, string isActiveStr)
+    public void SetCharacterActive(string isActiveStr)
     {
-        if (nameParameter == gameObject.name)
-        {
-            bool isActive = isActiveStr.ToLower() == "true";
-            canvasGroup.alpha = isActive ? 1f : 0f;
-            canvasGroup.blocksRaycasts = isActive;
-        }
+        bool isActive = isActiveStr.ToLower() == "true";
+        canvasGroup.alpha = isActive ? 1f : 0f;
+        canvasGroup.blocksRaycasts = isActive;
     }
 
     // 【功能三】手動變亮
     [YarnCommand("light")]
-    public void LightCharacter(string nameParameter)
+    public void LightCharacter()
     {
-        if (nameParameter == gameObject.name)
-        {
-            canvasGroup.alpha = 1f;
-        }
+        canvasGroup.alpha = 1f;
     }
 
     // 【功能四】手動變暗
     [YarnCommand("dim")]
-    public void DimCharacter(string nameParameter)
+    public void DimCharacter()
     {
-        if (nameParameter == gameObject.name)
-        {
-            canvasGroup.alpha = 0.5f;
-        }
+        canvasGroup.alpha = 0.5f;
     }
 }
