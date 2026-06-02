@@ -13,8 +13,7 @@ public class CharacterExpression : MonoBehaviour
     [Header("=== 背景設定 ===")]
     public Image bgImage;        // 拖入畫面上顯示背景的 UI Image
     // 這裡放入你想切換的背景圖片
-    public Sprite bg1Sprite;  // 街道背景
-    public Sprite bg2Sprite;    // 房間背景
+    public Sprite[] bgSprites;
 
     // 必須在 Start 或 Awake 中註冊指令
     void Start()
@@ -51,11 +50,20 @@ public class CharacterExpression : MonoBehaviour
     {
         switch (bgName)
         {
-            case "bg1":
-                bgImage.sprite = bg1Sprite;
+            case "house_am":
+                bgImage.sprite = bgSprites[0];
                 break;
-            case "bg2":
-                bgImage.sprite = bg2Sprite;
+            case "DryingYard":
+                bgImage.sprite = bgSprites[1];
+                break;
+            case "FirstMarket":
+                bgImage.sprite = bgSprites[2];
+                break;
+            case "lake":
+                bgImage.sprite = bgSprites[3];
+                break;
+            case "house_pm":
+                bgImage.sprite = bgSprites[4];
                 break;
             default:
                 Debug.LogWarning($"找不到名為 {bgName} 的背景圖片");
