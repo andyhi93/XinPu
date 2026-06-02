@@ -700,7 +700,7 @@ GameObject:
   - component: {fileID: 911682351}
   - component: {fileID: 911682350}
   m_Layer: 5
-  m_Name: me
+  m_Name: bababoi
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
