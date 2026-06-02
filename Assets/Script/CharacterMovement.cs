@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Yarn.Unity; // 引入 Yarn 命名空間
+using TMPro;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class CharacterMovement : MonoBehaviour
 {
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
+    public TMP_Text nameText;
 
     [Header("=== 顏色調整設定 ===")]
     public Color dimColor = new Color(0.6f, 0.6f, 0.6f, 1f); 
@@ -60,5 +62,19 @@ public class CharacterMovement : MonoBehaviour
     public void DimCharacter()
     {
         canvasGroup.alpha = 0.5f;
+    }
+
+    [YarnCommand("flip")]
+    public void FlipCharacter()
+    {
+        Vector3 currentScale = transform.localScale;
+        currentScale.x *= -1f;
+        transform.localScale = currentScale;
+    }
+
+    [YarnCommand("name")]
+    public void NameCharacter(string name)
+    {
+        nameText.text = name;
     }
 }

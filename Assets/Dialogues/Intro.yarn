@@ -1,32 +1,324 @@
 ﻿title: Start
 ---
-<<bg bg1>>
-<<teleport bababoi 0>>
-<<light bababoi>>
+<<jump Scene_01>>
+===
+
+title: Scene_01
+---
+<<bg house_am>>
+<<teleport Lan 0>>
+<<light Lan>>
 <<face tired>>
-我: （昨晚算帳算到眼睛撐不住才睡，這筆數字還壓在心底咧。）
+阿蘭: （昨晚算帳算到眼睛撐不住才睡，這筆數字還壓在心底咧。）
+<<face idle>>
  : <i>我輕手輕腳走向灶房，添柴、生火。</i>
 <<show father true>>
 <<teleport father -500>>
-<<teleport bababoi 500>>
-<<dim bababoi>>
+<<teleport Lan 500>>
+<<dim Lan>>
 公公: 起咧？
-<<light bababoi>>
+<<light Lan>>
 <<dim father>>
-我: 起咧，阿爸，飯快好啊。
+阿蘭: 起咧，阿爸，飯快好啊。
 : <i>公公沒有再回應。</i>
-我: （地瓜簽粥要早點滾，豬菜也要剁。）
-我: （這些事，不說，也沒人問，但日日都不能少。）
+阿蘭: （地瓜簽粥要早點滾，豬菜也要剁。）
+阿蘭: （這些事，不說，也沒人問，但日日都不能少。）
 -> 先顧灶火煮粥，豬菜等粥滾了再剁
     : <i>飽食度++／體力 -1</i>
 -> 粥先悶著，趁空先去剁豬菜
     : <i>飽食度+／家畜滿足度+／體力持平</i>
-<<jump End>>
+<<jump Scene_02>>
 ===
 
-title: End
+title: Scene_02
 ---
-<<bg bg2>>
-統神: 我不知道，我真的不知道！
-統神: 不要笑！不要笑！不要笑！
+<<bg DryingYard>>
+<<face idle>>
+<<show father false>>
+<<show worker true>>
+<<teleport worker -500>>
+<<dim worker>>
+<<teleport Lan 0>>
+<<light Lan>>
+: <i>風突然變大。竹篩邊緣開始輕輕拍動，她手上的活還沒停，眼睛已經掃過整片曬場了。</i>
+: <i>主角走向網子邊緣，開始檢查固定的狀況。丈夫這才走過來。</i>
+<<show husband true>>
+<<teleport husband 500>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 九降風來了啊，今年來得早。
+<<dim husband>>
+<<flip Lan>>
+<<light Lan>>
+阿蘭: 嗯，風這麼大，網子要壓牢哦。
+<<dim Lan>>
+<<light husband>>
+丈夫: 去把沙包搬來，四個角都要壓，不能讓網子飛起來！
+<<dim husband>>
+<<flip worker>>
+<<light worker>>
+工人: 好！
+<<dim worker>>
+<<flip worker>>
+<<light husband>>
+丈夫: 你去把靠外面那排竹篩的間距調開一點，讓風能穿過去。
+<<dim husband>>
+<<light Lan>>
+阿蘭: （這我剛才就在想了——但他說，就照他說的做。）
+阿蘭: 知咧。
+<<flip Lan>>
+: <i>風繼續變強，網子繃得緊緊的，柿餅在風裡輕輕搖。</i>
+阿蘭: （九降風一來，這批柿餅再曬個幾天就能收了啊。撐住就好。）
+-> 先調竹篩間距，讓風能均勻吹透每一個
+    : <i>柿餅熟成進度 +2／體力 -2</i>
+-> 先把網子四角再加壓一層，確保不會被掀起
+    : <i>作物損失降低／體力 -1／熟成進度 +1</i>
+<<jump Scene_03>>
+===
+
+title: Scene_03
+---
+<<bg DryingYard>>
+<<show worker true>>
+<<teleport worker -500>>
+<<dim worker>>
+<<show uncle true>>
+<<teleport uncle -300>>
+<<dim uncle>>
+<<show husband true>>
+<<teleport husband -100>>
+<<dim husband>>
+<<teleport Lan 500>>
+<<light Lan>>
+: <i>太陽正大，曬場的熱氣從地面往上蒸。便當送到了，男人們先蹲下來吃，她還站著。</i>
+<<dim Lan>>
+<<flip uncle>>
+<<light uncle>>
+叔叔: 來來來，先吃飯啊，餓著肚子做不了事哦。
+<<dim uncle>>
+<<flip uncle>>
+<<flip worker>>
+<<light worker>>
+工人: 今天有酸菜，好咧。
+<<dim worker>>
+<<flip worker>>
+<<flip uncle>>
+<<light uncle>>
+叔叔: 你也來吃啊，站著做什麼。
+<<dim uncle>>
+<<flip uncle>>
+<<light Lan>>
+阿蘭: 叔叔你們先吃，我把這排顧好再來。
+<<dim Lan>>
+<<flip uncle>>
+<<light uncle>>
+叔叔: 你啊，就是停不下來。
+<<dim uncle>>
+<<flip uncle>>
+<<light husband>>
+丈夫: 吃快一點，下午還有事。
+<<dim husband>>
+<<light Lan>>
+阿蘭: （他說的「還有事」，是他的事。我的事從來沒有完過啊。）
+: <i>男人們吃完放下碗，陸續站起來。她這才蹲下來，把剩下的粥扒完。</i>
+阿蘭: （地瓜簽粥涼了也是飯，吃進去就是力氣。）
+-> 趁他們休息空檔，把下午要翻的竹篩先排好
+    : <i>下午效率提升／體力 -1／飽食度 -1</i>
+-> 把飯吃完再說，下午才有力氣
+    : <i>體力持平／飽食度 +1</i>
+<<jump Scene_04>>
+===
+
+title: Scene_04
+---
+<<bg FirstMarket>>
+<<show worker false>>
+<<show uncle false>>
+<<show husband false>>
+<<show auntie true>>
+<<teleport auntie -300>>
+<<dim auntie>>
+<<teleport Lan 300>>
+<<light Lan>>
+: <i>市場裡說的是台語。她一踏進來，說話的方式就跟著換了——不是刻意的，是從小就學會的事。</i>
+<<dim Lan>>
+<<light auntie>>
+阿姨: 你知道無？今仔日頂街那個收柿餅的商人，秤仔有問題。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 哪個？就是上個月來的那個？
+<<dim Lan>>
+<<light auntie>>
+阿姨: 就是伊。隔壁庄的人去賣，少了足足半斤，講了伊還不認。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: （這消息要記住，下次去賣要自己帶秤。）
+阿蘭: 那我們去哪家賣較俗咧？
+<<dim Lan>>
+<<light auntie>>
+阿姨: 聽講新竹那邊有個盤商，價格比較實在，不過要湊夠量才划算。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 湊量……我們家這批快好了，你們家呢？
+<<dim Lan>>
+<<light auntie>>
+: <i>阿姨算了一下。</i>
+阿姨: 再等幾天啊，九降風若繼續，應該來得及。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: （若能跟她們一起湊量去新竹，這批柿餅就不用怕被壓價了。回去要跟囡仔的爸說。）
+<<dim Lan>>
+<<light auntie>>
+阿姨: 對了，你今仔日要買啥？蕃薯今仔日上好，頭家說快賣完了。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 較俗咧，我買多一點。
+<<dim Lan>>
+<<light auntie>>
+阿姨: 你每次攏按呢講。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: （因為每一文錢都要算清楚啊。）
+-> 答應跟阿姨湊量一起去新竹賣
+    : <i>柿餅售價提升／需要等阿姨那批也曬好，時間延後</i>
+-> 這批先在本地賣，不等了
+    : <i>收入正常／錯過較好價格</i>
+
+<<jump Scene_05>>
+===
+
+title: Scene_05
+---
+<<bg lake>>
+<<teleport auntie -300>>
+<<teleport Lan 300>>
+<<dim auntie>>
+<<light Lan>>
+: <i>主角蹲下來，把衣服浸進水裡，開始搓洗。</i>
+<<dim Lan>>
+<<light auntie>>
+阿姨: 你知道咧，下庄那個阿水嫂，她家阿公這幾天病得很重哦。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 哪裡不舒服啊？
+<<dim Lan>>
+<<light auntie>>
+阿姨: 聽說是咳嗽咳了好幾個禮拜，昨天才讓人扶去看醫生咧。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: （這個天氣，老人家要注意啊。回去要提醒家裡的阿公多穿一件。）
+<<dim Lan>>
+<<light auntie>>
+阿姨: 她一個人顧田又顧家，還要顧病人，真的很辛苦哦。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 無要緊，我們有空去幫她看看啊。
+<<dim Lan>>
+<<light auntie>>
+阿姨: 對了，你們家這批柿餅曬得怎樣咧？
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 差不多了，再等幾天看九降風啊。
+<<dim Lan>>
+<<light auntie>>
+阿姨: 聽說隔壁庄有一家，曬到一半被蟲咬了，整批都壞去咧。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: （要回去再檢查一遍竹篩——這事不能大意。）
+阿蘭: 哪家啊？
+<<dim Lan>>
+<<light auntie>>
+阿姨: 就是那個，田在山腳下的那家。通風不好，曬起來就是這樣。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: 我們家曬場還好，不過你說的我記住了哦。
+<<dim Lan>>
+<<light auntie>>
+阿姨: 好了，天快黑了，回去煮飯啊。
+<<dim auntie>>
+<<light Lan>>
+阿蘭: （回去還要煮飯、燒水、顧孩子——但在這裡站一下，已經是今天最輕鬆的時候了啊。）
+-> 順路去探望阿水嫂，晚一點回家
+    : <i>鄰里關係 +1／體力 -1／回家時間延後</i>
+-> 天快黑了，先回家
+    : <i>體力持平／晚飯準備時間充裕</i>
+<<jump Scene_06>>
+===
+
+title: Scene_06
+---
+<<bg house_pm>>
+<<show auntie false>>
+<<show popo true>>
+<<teleport popo -300>>
+<<flip popo>>
+<<dim popo>>
+<<teleport Lan 300>>
+<<light Lan>>
+: <i>飯煮好了，家裡的人吃完各自散去。她把剩下的扒完，站起來收拾。洗澡水燒了兩鍋，公公、丈夫、孩子輪流用完，剩下的那鍋她摸了摸——已經不太熱了。</i>
+阿蘭: （涼水也是水，洗了就好啊。）
+: <i>洗完出來，廳堂還亮著燈。婆婆坐在燈下，看見她進來。</i>
+<<dim Lan>>
+<<light popo>>
+婆婆: 這件破了多久了，現在才補啊？
+<<dim popo>>
+<<light Lan>>
+阿蘭: 今天比較忙，沒來得及哦，阿婆。
+<<dim Lan>>
+<<light popo>>
+婆婆: 忙。天天都忙，針線的事還是不能放。
+<<dim popo>>
+<<light Lan>>
+阿蘭: （她說的是，我記住了。）
+: <i>主角低頭縫，沒有再說話。燈光昏黃，針腳要靠近了才看得清。</i>
+<<dim Lan>>
+<<light popo>>
+婆婆: 這針腳歪了，重來。
+<<dim popo>>
+<<light Lan>>
+阿蘭: 好，我來拆。
+<<dim Lan>>
+<<light popo>>
+婆婆: 我先去睡了，你們的事自己顧好。
+<<show popo false>>
+<<light Lan>>
+: <i>婆婆走了。廳堂只剩她一個人和那盞燈。</i>
+阿蘭: （針腳哪裡歪了——但她說歪了，就重來一遍。）
+: <i>丈夫從外面走進來，把一本帳冊放到桌上。</i>
+<<show husband true>>
+<<teleport husband -300>>
+<<flip husband>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 這批柿餅算一下，看能賣多少。
+<<dim husband>>
+<<light Lan>>
+阿蘭: 這批大概還有五天可以收，如果九降風繼續的話。
+<<dim Lan>>
+<<light husband>>
+丈夫: 收成之後先付地租，剩下的留著買冬天的米。
+<<dim husband>>
+<<light Lan>>
+阿蘭: 若照上次的收購價，扣掉地租……還差一點點咧。
+<<dim Lan>>
+<<light husband>>
+丈夫: 哪裡差？
+<<dim husband>>
+<<light Lan>>
+阿蘭: 上個月豬飼料的錢還沒補回來，加上田賦，這個月有點緊哦。
+<<dim Lan>>
+<<light husband>>
+丈夫: 那下批早點收，不要等太久。
+<<dim husband>>
+<<light Lan>>
+阿蘭: （早收品質差，價格更低——但這話說了，他也不想聽。）
+阿蘭: 好，我知道了啊。
+<<show husband false>>
+: <i>丈夫把帳冊留下，起身去睡了。</i>
+: <i>她一個人坐在燈下，把數字再算了一遍，又一遍。</i>
+阿蘭: （差的那一點，再想想辦法。總是有辦法的啊。）
+-> 把帳再仔細算一遍，看看哪裡能省
+    : <i>財務壓力 -1／體力 -1／睡眠時間減少</i>
+-> 帳先放著，明天再說，先去睡
+    : <i>體力持平／財務壓力持續到明天</i>
 ===
