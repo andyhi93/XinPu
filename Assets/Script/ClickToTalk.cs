@@ -10,7 +10,7 @@ public class ClickToTalk : MonoBehaviour
 
     void Start()
     {
-        dialogueRunner = FindObjectOfType<DialogueRunner>();
+        dialogueRunner = Object.FindFirstObjectByType<DialogueRunner>();
         if (dialogueRunner == null)
         {
             Debug.LogError("【對話測試】場景中找不到 DialogueRunner！請檢查是否有拉入 Dialogue System。");
@@ -19,6 +19,13 @@ public class ClickToTalk : MonoBehaviour
 
     void OnMouseDown()
     {
+        // Check if game is paused
+        if (TimeManager.Instance != null && TimeManager.Instance.isGamePaused)
+        {
+            Debug.Log("【對話測試】遊戲已暫停，忽略點擊。");
+            return;
+        }
+
         // 旗子 1：確認滑鼠確實有成功點擊到這個物件的 Collider
         Debug.Log($"【對話測試】滑鼠成功點擊到了物件：{gameObject.name}");
 
