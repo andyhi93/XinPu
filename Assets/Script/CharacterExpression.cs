@@ -19,7 +19,7 @@ public class CharacterExpression : MonoBehaviour
     void Start()
     {
         // 尋找場景中的 DialogueRunner 并註冊指令
-        var dialogueRunner = FindObjectOfType<DialogueRunner>();
+        var dialogueRunner = FindFirstObjectByType<DialogueRunner>();
         
         // 1. 註冊一個叫做 <<face 差分名稱>> 的指令
         dialogueRunner.AddCommandHandler<string>("face", ChangeExpression);
