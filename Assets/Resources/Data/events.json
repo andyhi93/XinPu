@@ -1,0 +1,40 @@
+{
+  "events": [
+    {
+      "id": "rain",
+      "location": "HEYUAN",
+      "tier": 2,
+      "warningDelay": 8.0,
+      "resolveWindow": 25.0,
+      "yarnNode": "Event_Rain",
+      "triggerOnce": true,
+      "ignoredEffects": [
+        { "statName": "health", "amount": -1.0 }
+      ]
+    },
+    {
+      "id": "baby_cry",
+      "location": "ANY",
+      "tier": 1,
+      "warningDelay": 0.0,
+      "resolveWindow": 40.0,
+      "yarnNode": "Event_BabyCry",
+      "triggerOnce": false,
+      "ignoredEffects": [
+        { "statName": "mood", "amount": -5.0 }
+      ]
+    },
+    {
+      "id": "corridor_check",
+      "location": "LANGDAO",
+      "tier": 1,
+      "warningDelay": 0.0,
+      "resolveWindow": 60.0,
+      "yarnNode": "Event_CorridorCheck",
+      "triggerOnce": true,
+      "ignoredEffects": [
+        { "statName": "money", "amount": -10.0 }
+      ]
+    }
+  ]
+}
