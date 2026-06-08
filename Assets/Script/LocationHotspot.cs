@@ -35,4 +35,17 @@ public class LocationHotspot : MonoBehaviour,
             Debug.LogError("【地點系統】找不到 LocationManager 實例！");
         }
     }
+
+    /// <summary>
+    /// 根據是否有未處理事件來更新 UI 圓點。
+    /// </summary>
+    public void UpdateEventState()
+    {
+        if (eventDot != null && EventManager.Instance != null)
+        {
+            // 這裡可以根據 location 來過濾是否顯示圓點
+            // 目前先簡單設定：只要有未處理事件就顯示
+            eventDot.SetActive(EventManager.Instance.DoesLocationNeedAttention(location));
+        }
+    }
 }
