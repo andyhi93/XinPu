@@ -182,5 +182,11 @@ public class PersimmonMiniGame : MonoBehaviour
         
         // 狀態保留
         UpdateUI();
+
+        // 通知 GameManager 小遊戲已關閉，執行切換回三合院的邏輯
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ClosePersimmonGame();
+        }
     }
 }
