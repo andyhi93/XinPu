@@ -186,15 +186,15 @@ public class EventManager : MonoBehaviour
     {
         bool isPlayerAtLocation = CheckPlayerLocation(ev.location);
 
-        if (isPlayerAtLocation && dialogueRunner != null && !dialogueRunner.IsDialogueRunning)
+        if (isPlayerAtLocation && GameManager.Instance != null)
         {
-            // 玩家在場：觸發 Yarn 對話
-            Debug.Log($"【事件結算】玩家在場，觸發對話：{ev.yarnNode}");
-            dialogueRunner.StartDialogue(ev.yarnNode);
+            // 玩家在場：透過 GameManager 觸發 Yarn 對話
+            Debug.Log($"【事件結算】玩家在場，請求啟動對話：{ev.yarnNode}");
+            GameManager.Instance.StartDialogue(ev.yarnNode);
         }
         else
         {
-            // 玩家不在場：將事件加入「未處理」清單，不立即執行 ignoredEffect
+            // 玩家不在場：將事件加入「未處理」清單
             Debug.Log($"【事件結算】玩家不在場 ({ev.location})，事件「{ev.id}」進入待處理清單。");
             if (!pendingIgnoredEventIDs.Contains(ev.id))
             {

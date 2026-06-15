@@ -700,11 +700,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 278686765}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
+  characterImage: {fileID: 0}
   nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  expressions: []
+  isFacingRight: 1
 --- !u!225 &278686768
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -890,7 +892,7 @@ GameObject:
   m_Component:
   - component: {fileID: 307495159}
   - component: {fileID: 307495161}
-  - component: {fileID: 307495160}
+  - component: {fileID: 307495162}
   m_Layer: 5
   m_Name: father
   m_TagString: Untagged
@@ -919,20 +921,6 @@ RectTransform:
   m_AnchoredPosition: {x: -500, y: -300}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &307495160
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 307495158}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
-  nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
 --- !u!225 &307495161
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -945,6 +933,22 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &307495162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307495158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterController
+  characterImage: {fileID: 0}
+  nameText: {fileID: 0}
+  expressions: []
+  isFacingRight: 1
 --- !u!1 &326294406
 GameObject:
   m_ObjectHideFlags: 0
@@ -1632,8 +1636,10 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 672050910}
   - {fileID: 863007244}
   - {fileID: 277328697}
+  - {fileID: 748091899}
   - {fileID: 751379338}
   - {fileID: 1616746374}
   - {fileID: 2104553324}
@@ -2050,11 +2056,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 622914824}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
+  characterImage: {fileID: 0}
   nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  expressions: []
+  isFacingRight: 1
 --- !u!225 &622914827
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2142,6 +2150,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 637576784}
   m_CullTransparentMesh: 1
+--- !u!1 &672050909
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 672050910}
+  - component: {fileID: 672050911}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &672050910
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 672050909}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 572902734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &672050911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 672050909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d40ec64a7288c740a3b2eb222912566, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  dialogueRunner: {fileID: 1936816536}
+  startingNode: Scene_01
+  autoStartDialogue: 0
+  currentState: 1
 --- !u!1 &690914421
 GameObject:
   m_ObjectHideFlags: 0
@@ -2355,6 +2411,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 747204201}
   m_CullTransparentMesh: 1
+--- !u!1 &748091898
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 748091899}
+  - component: {fileID: 748091900}
+  m_Layer: 0
+  m_Name: BackgroundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &748091899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 748091898}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 572902734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &748091900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 748091898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e82dee78f23ed7d42bec284bfb287f88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BackgroundManager
+  bgImage: {fileID: 1413919360}
+  backgrounds:
+  - name: 
+    sprite: {fileID: 0}
 --- !u!1 &751379336
 GameObject:
   m_ObjectHideFlags: 0
@@ -2903,7 +3007,7 @@ GameObject:
   m_Component:
   - component: {fileID: 911682349}
   - component: {fileID: 911682351}
-  - component: {fileID: 911682350}
+  - component: {fileID: 911682352}
   m_Layer: 5
   m_Name: Lan
   m_TagString: Untagged
@@ -2931,20 +3035,6 @@ RectTransform:
   m_AnchoredPosition: {x: -758.2001, y: -494}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &911682350
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 911682348}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
-  nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
 --- !u!225 &911682351
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2957,6 +3047,26 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &911682352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 911682348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterController
+  characterImage: {fileID: 286978678}
+  nameText: {fileID: 0}
+  expressions:
+  - name: idle
+    sprite: {fileID: 21300000, guid: c5c9f51b32da4ac439bf7867376f27ec, type: 3}
+  - name: tired
+    sprite: {fileID: 21300000, guid: 18136cb042174c740a69694f030e3a7e, type: 3}
+  isFacingRight: 1
 --- !u!1 &967858065
 GameObject:
   m_ObjectHideFlags: 0
@@ -3649,11 +3759,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1155368269}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
+  characterImage: {fileID: 0}
   nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  expressions: []
+  isFacingRight: 1
 --- !u!225 &1155368272
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -5889,6 +6001,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1929987477}
   m_CullTransparentMesh: 1
+--- !u!114 &1936816536 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7762751745860064944, guid: 6a86cf90252d2d5408352a48bcb5ce9d, type: 3}
+  m_PrefabInstance: {fileID: 5673525404746638456}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bec29c0a230741bdac901dba8da47ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1999478431
 GameObject:
   m_ObjectHideFlags: 0
@@ -6149,11 +6272,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2033766147}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
+  characterImage: {fileID: 0}
   nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  expressions: []
+  isFacingRight: 1
 --- !u!225 &2033766150
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -6214,11 +6339,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2063539273}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77abbc168936d0a418b45626060674aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 54f81e3d341c8904c9b66c21b0e7ae75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterMovement
+  characterImage: {fileID: 0}
   nameText: {fileID: 0}
-  dimColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  expressions: []
+  isFacingRight: 1
 --- !u!225 &2063539276
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -6584,7 +6711,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7762751745860064944, guid: 6a86cf90252d2d5408352a48bcb5ce9d, type: 3}
       propertyPath: autoStart
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7762751745860064944, guid: 6a86cf90252d2d5408352a48bcb5ce9d, type: 3}
       propertyPath: startNode
