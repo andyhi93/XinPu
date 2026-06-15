@@ -8,9 +8,9 @@ title: Scene_01
 <<bg house_am>>
 <<teleport Lan 0>>
 <<light Lan>>
-<<face tired>>
+<<face Lan tired>>
 阿蘭: （昨晚算帳算到眼睛撐不住才睡，這筆數字還壓在心底咧。）
-<<face idle>>
+<<face Lan idle>>
  : <i>我輕手輕腳走向灶房，添柴、生火。</i>
 <<show father true>>
 <<teleport father -500>>
@@ -33,7 +33,7 @@ title: Scene_01
 title: Scene_02
 ---
 <<bg DryingYard>>
-<<face idle>>
+<<face Lan idle>>
 <<show father false>>
 <<show worker true>>
 <<teleport worker -500>>
