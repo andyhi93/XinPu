@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: 18136cb042174c740a69694f030e3a7e
+guid: d614e103bcd67834bbabdb52a0a44322
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -268721318991653736
-    second: "\u4E3B\u89D2\uFF08\u5DEE\uFF09_0"
+      213: 7139453674827323443
+    second: "\u8C6C\u820DGlow_0"
+  - first:
+      213: -722987423441041484
+    second: "\u8C6C\u820DGlow_1"
+  - first:
+      213: -9153951113181992629
+    second: "\u8C6C\u820DGlow_2"
+  - first:
+      213: -6451490397026773493
+    second: "\u8C6C\u820DGlow_3"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -97,7 +106,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: Android
+    buildTarget: WebGL
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -113,13 +122,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u4E3B\u89D2\uFF08\u5DEE\uFF09_0"
+      name: "\u8C6C\u820DGlow_0"
       rect:
         serializedVersion: 2
-        x: 185
-        y: 116
-        width: 481
-        height: 1528
+        x: 1259
+        y: 311
+        width: 440
+        height: 406
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +137,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8949de5526f454cf0800000000000000
-      internalID: -268721318991653736
+      spriteID: 33890727a4f641360800000000000000
+      internalID: 7139453674827323443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u8C6C\u820DGlow_1"
+      rect:
+        serializedVersion: 2
+        x: 1260
+        y: 637
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b7c8b8d4ce67f5f0800000000000000
+      internalID: -722987423441041484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u8C6C\u820DGlow_2"
+      rect:
+        serializedVersion: 2
+        x: 1687
+        y: 491
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b49ee7756f1a6f080800000000000000
+      internalID: -9153951113181992629
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u8C6C\u820DGlow_3"
+      rect:
+        serializedVersion: 2
+        x: 1692
+        y: 499
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0610655aa3b776a0800000000000000
+      internalID: -6451490397026773493
       vertices: []
       indices: 
       edges: []
@@ -148,7 +223,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u4E3B\u89D2\uFF08\u5DEE\uFF09_0": -268721318991653736
+      "\u8C6C\u820DGlow_0": 7139453674827323443
+      "\u8C6C\u820DGlow_1": -722987423441041484
+      "\u8C6C\u820DGlow_2": -9153951113181992629
+      "\u8C6C\u820DGlow_3": -6451490397026773493
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

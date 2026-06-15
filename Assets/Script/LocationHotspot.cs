@@ -12,6 +12,13 @@ public class LocationHotspot : MonoBehaviour,
     public GameObject label;       // 地點名稱
     public GameObject eventDot;    // 事件提示點 (可選)
 
+    private void Start()
+    {
+        // 初始化：預設不顯示外框與地點名稱
+        if (border != null) border.SetActive(false);
+        if (label != null) label.SetActive(false);
+    }
+
     public void OnPointerEnter(PointerEventData e)
     {
         if (border != null) border.SetActive(true);

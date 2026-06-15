@@ -20,6 +20,9 @@ public class GameManager : MonoBehaviour
     [Header("目前狀態")]
     public GameState currentState = GameState.FreeRoam;
 
+    [Header("小遊戲引用")]
+    public PersimmonMiniGame persimmonGame; // 在 Inspector 中拖入
+
     private void Awake()
     {
         if (Instance == null)
@@ -33,6 +36,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        // 延遲訂閱以確保 LocationManager.Instance 已就緒，或在 Start 處理
+    }
+
     private void Start()
     {
         if (dialogueRunner == null)
@@ -44,6 +52,56 @@ public class GameManager : MonoBehaviour
         if (autoStartDialogue && dialogueRunner != null && !string.IsNullOrEmpty(startingNode))
         {
             StartDialogue(startingNode);
+        }
+
+        // 訂閱地點切換事件
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.OnLocationChanged += HandleLocationChanged;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.OnLocationChanged -= HandleLocationChanged;
+        }
+    }
+
+    /// <summary>
+    /// 處理地點切換：若進入禾埕則自動開啟小遊戲
+    /// </summary>
+    private void HandleLocationChanged(LocationManager.Location newLocation)
+    {
+        if (newLocation == LocationManager.Location.禾埕)
+        {
+            OpenPersimmonGame();
+        }
+    }
+
+    public void OpenPersimmonGame()
+    {
+        if (persimmonGame != null)
+        {
+            Debug.Log("【GameManager】進入禾埕，自動開啟柿子小遊戲。");
+            SetGameState(GameState.Minigame);
+            persimmonGame.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// 關閉小遊戲並自動切換回三合院
+    /// </summary>
+    public void ClosePersimmonGame()
+    {
+        Debug.Log("【GameManager】柿子小遊戲關閉，返回三合院。");
+        SetGameState(GameState.FreeRoam);
+
+        if (LocationManager.Instance != null)
+        {
+            // 自動切換回中心點，避免待在禾埕卻沒在玩遊戲
+            LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
         }
     }
 
