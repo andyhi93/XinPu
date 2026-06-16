@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
 
     [Header("小遊戲引用")]
     public PersimmonMiniGame persimmonGame; // 在 Inspector 中拖入
+    public KitchenMiniGame kitchenGame;     // 在 Inspector 中拖入
 
     private void Awake()
     {
@@ -70,13 +71,17 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 處理地點切換：若進入禾埕則自動開啟小遊戲
+    /// 處理地點切換：自動開啟對應地點的小遊戲
     /// </summary>
     private void HandleLocationChanged(LocationManager.Location newLocation)
     {
         if (newLocation == LocationManager.Location.禾埕)
         {
             OpenPersimmonGame();
+        }
+        else if (newLocation == LocationManager.Location.灶房)
+        {
+            OpenKitchenGame();
         }
     }
 
@@ -101,6 +106,27 @@ public class GameManager : MonoBehaviour
         if (LocationManager.Instance != null)
         {
             // 自動切換回中心點，避免待在禾埕卻沒在玩遊戲
+            LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
+        }
+    }
+
+    public void OpenKitchenGame()
+    {
+        if (kitchenGame != null)
+        {
+            Debug.Log("【GameManager】進入灶房，自動開啟廚房小遊戲。");
+            SetGameState(GameState.Minigame);
+            kitchenGame.OpenGame();
+        }
+    }
+
+    public void CloseKitchenGame()
+    {
+        Debug.Log("【GameManager】廚房小遊戲關閉，返回三合院。");
+        SetGameState(GameState.FreeRoam);
+
+        if (LocationManager.Instance != null)
+        {
             LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
         }
     }
@@ -155,8 +181,8 @@ public class GameManager : MonoBehaviour
                 if (TimeManager.Instance != null) TimeManager.Instance.isGamePaused = false;
                 break;
             case GameState.Minigame:
-                // 進入小遊戲暫停時間
-                if (TimeManager.Instance != null) TimeManager.Instance.isGamePaused = true;
+                // 進入小遊戲「不」暫停時間（讓廚房等邏輯持續運作）
+                if (TimeManager.Instance != null) TimeManager.Instance.isGamePaused = false;
                 break;
         }
         

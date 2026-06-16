@@ -2,15 +2,15 @@
 ---
 ===
 
-title: Scene_01
+title: Scene_Morning
 ---
 <<bg house_am>>
-<<teleport Lan 0>>
+<<teleport Lan 0 -300>>
 <<light Lan>>
 <<face Lan tired>>
 阿蘭: （昨晚算帳算到眼睛撐不住才睡，這筆數字還壓在心底咧。）
 <<face Lan idle>>
- : <i>我輕手輕腳走向灶房，添柴、生火。</i>
+: <i>天色還暗，我摸黑起了身。</i>
 <<show father true>>
 <<teleport father -500>>
 <<teleport Lan 500>>
@@ -18,15 +18,17 @@ title: Scene_01
 公公: 起咧？
 <<light Lan>>
 <<dim father>>
-阿蘭: 起咧，阿爸，飯快好啊。
+<<flip Lan L>>
+阿蘭: 起咧，阿爸。這就去燒火。
 : <i>公公沒有再回應。</i>
 阿蘭: （地瓜簽粥要早點滾，豬菜也要剁。）
 阿蘭: （這些事，不說，也沒人問，但日日都不能少。）
--> 先顧灶火煮粥，豬菜等粥滾了再剁
-    : <i>飽食度++／體力 -1</i>
--> 粥先悶著，趁空先去剁豬菜
-    : <i>飽食度+／家畜滿足度+／體力持平</i>
-<<jump Scene_02>>
+: <i>天光漸漸透進來了。</i>
+<<show father false>>
+// 切換到自由行動模式
+<<teleport Lan -760 -395>>
+<<flip Lan R>>
+<<game_mode "FreeRoam">>
 ===
 
 title: Scene_02
