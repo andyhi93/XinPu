@@ -83,6 +83,11 @@ public class GameManager : MonoBehaviour
         {
             OpenKitchenGame();
         }
+        else if (newLocation == LocationManager.Location.廳堂)
+        {
+            Debug.Log("【GameManager】進入廳堂，觸發對話。");
+            StartDialogue("Scene_Hall");
+        }
     }
 
     public void OpenPersimmonGame()

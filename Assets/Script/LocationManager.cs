@@ -46,10 +46,12 @@ public class LocationManager : MonoBehaviour
     /// <summary>
     /// 切換到指定地點。
     /// </summary>
-    /// <param name="newLocation">目標地點的 Enum 或數字</param>
+    /// <param name="locationIndex">目標地點的 Enum 或數字</param>
     [YarnCommand("go_to_location")]
-    public void GoToLocation(int locationIndex)
+    public static void GoToLocationCommand(int locationIndex)
     {
+        if (Instance == null) return;
+
         // 檢查是否為有效的 Enum 索引
         if (!Enum.IsDefined(typeof(Location), locationIndex))
         {
@@ -58,13 +60,14 @@ public class LocationManager : MonoBehaviour
         }
 
         Location target = (Location)locationIndex;
-        GoToLocation(target);
+        // 透過 Yarn 指令切換地點時，強制執行（無視對話正在進行的限制）
+        Instance.GoToLocation(target, force: true);
     }
 
-    public void GoToLocation(Location target)
+    public void GoToLocation(Location target, bool force = false)
     {
-        // 1. 統一檢查是否可以切換地點
-        if (!CanSwitchLocation())
+        // 1. 統一檢查是否可以切換地點 (除非被強制執行)
+        if (!force && !CanSwitchLocation())
         {
             Debug.LogWarning("【地點系統】目前狀態（對話或小遊戲中）禁止切換地點。");
             return;
