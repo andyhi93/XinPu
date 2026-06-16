@@ -99,14 +99,28 @@ public class ResourceManager : MonoBehaviour
     {
         if (Instance == null) return 0;
 
-        return statName.ToLower() switch
+        switch (statName.ToLower())
         {
-            "health" => Instance.health,
-            "mood" => Instance.mood,
-            "money" => Instance.money,
-            "mother_in_law_favor" => (int)Instance.motherInLawFavor,
-            _ => 0
-        };
+            case "health": return Instance.health;
+            case "mood": return Instance.mood;
+            case "money": return Instance.money;
+            case "mother_in_law_favor": return (int)Instance.motherInLawFavor;
+            default:
+                Debug.LogWarning($"【ResourceManager】試圖取得不存在的數值：{statName}");
+                return 0f;
+        }
+    }
+
+    /// <summary>
+    /// 透過 Yarn Spinner 修改角色好感度
+    /// </summary>
+    [YarnCommand("adjust_favorability")]
+    public static void AdjustFavorabilityCommand(string npcId, float amount)
+    {
+        if (Instance != null)
+        {
+            Instance.ModifyFavorability(npcId, amount);
+        }
     }
 
     /// <summary>

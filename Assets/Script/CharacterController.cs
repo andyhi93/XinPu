@@ -37,9 +37,6 @@ public class CharacterController : MonoBehaviour
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
-        
-        // 根據初始 Scale 判斷面向
-        isFacingRight = transform.localScale.x >= 0;
     }
 
     /// <summary>
@@ -114,24 +111,29 @@ public class CharacterController : MonoBehaviour
     public void Flip(string mode = "toggle")
     {
         string m = mode.ToLower();
+        bool targetFacingRight = isFacingRight;
 
         if (m == "r")
         {
-            isFacingRight = true;
+            targetFacingRight = true;
         }
         else if (m == "l")
         {
-            isFacingRight = false;
+            targetFacingRight = false;
         }
         else
         {
-            isFacingRight = !isFacingRight;
+            targetFacingRight = !isFacingRight;
         }
 
-        // 根據布林值套用 Scale
-        Vector3 scale = transform.localScale;
-        scale.x = Mathf.Abs(scale.x) * (isFacingRight ? 1f : -1f);
-        transform.localScale = scale;
+        // 如果目標面向與現在不同，就直接翻轉 X 軸，這樣就能適應預設朝左或朝右的圖片
+        if (targetFacingRight != isFacingRight)
+        {
+            Vector3 scale = transform.localScale;
+            scale.x *= -1f;
+            transform.localScale = scale;
+            isFacingRight = targetFacingRight;
+        }
     }
 
     /// <summary>

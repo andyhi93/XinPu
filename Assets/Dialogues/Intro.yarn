@@ -27,8 +27,8 @@ title: Scene_Morning
 : <i>天光漸漸透進來了。</i>
 <<show father false>>
 // 切換到自由行動模式
-<<teleport Lan -760 -395>>
-<<flip Lan R>>
+<<teleport Lan 760 -395>>
+<<flip Lan L>>
 <<game_mode "FreeRoam">>
 ===
 
@@ -82,12 +82,72 @@ title: ServeFood_Loop
 
 title: ServeFood_Done
 ---
-// 觸發 C# 方法，增加體力 (HP) 3
-//<<adjust_stat "health" 3>>
 // 觸發 C# 方法，推進時間 10 分鐘
 <<advance_time_minutes 10>>
 : <i>盛了一輪，日頭已經高了一點。</i>
 阿蘭: 端去廳堂給大家吃吧。
+===
+
+title: Scene_Hall
+---
+<<bg house_pm>> // 可以依據需求替換背景
+: <i>走進了廳堂。</i>
+
+<<if is_food_done()>>
+    阿蘭: （地瓜簽粥已經煮好了。）
+    -> 端飯給大家吃
+        <<jump Scene_DiningHall>>
+    -> 離開
+        <<go_to_location 0>> // 0 代表三合院中心點
+<<else>>
+    阿蘭: （飯還沒煮好，等下再來吧。）
+    -> 離開
+        <<go_to_location 0>>
+<<endif>>
+===
+
+title: Scene_DiningHall
+---
+<<bg hall>>
+<<show father true>>
+<<show mother true>>
+<<show child true>>
+
+: <i>我把碗一一放上桌。</i>
+
+<<if $is_late>>
+    : <i>阿公坐著，沒有說話。</i>
+    阿婆: 這麼晚才好，粥都涼了。
+
+    -> 回嘴
+        阿蘭: 灶火難控，阿姆見諒。
+        : <i>阿婆沒有再說話，但臉色沉了。</i>
+        <<adjust_favorability "grandmother" -10>>
+        : <i>（阿婆的好感度下降了）</i>
+    -> 沉默 <<if get_stat("mood") > 20>>
+        阿蘭: （吞下去。）
+        <<adjust_stat "mood" -10>>
+        : <i>（心裡——悶了一塊）</i>
+    -> 沉默（心情不足，無法承受） <<if get_stat("mood") <= 20>>
+        : <i>（已經沒有什麼可以再壓了。）</i>
+
+    阿婆: 阿寶，來阿婆這裡坐。
+    孩子: 阿婆！
+<<else>>
+    公公: 坐落來吃。
+    阿蘭: 好，阿爸先吃。
+    阿婆: 阿寶，來，阿婆幫你盛。
+    孩子: 阿婆，今天有蛋嗎？
+    阿婆: 哪有蛋，乖，粥也甜咧。
+<<endif>>
+
+: <i>他們吃著，我在旁邊收拾碗筷。</i>
+: <i>等孩子吃得差不多，我才端起自己那碗。</i>
+: <i>粥還溫，站著喝完。</i>
+
+<<adjust_stat "health" 2>>
+
+: <i>填了些東西，身子稍微有力氣了。</i>
 ===
 
 title: Scene_02

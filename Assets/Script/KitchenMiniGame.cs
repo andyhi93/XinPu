@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Yarn.Unity;
 
 /// <summary>
 /// 廚房煮飯小遊戲控制器
@@ -9,6 +10,8 @@ using TMPro;
 /// </summary>
 public class KitchenMiniGame : MonoBehaviour
 {
+    public static KitchenMiniGame Instance { get; private set; }
+
     // 遊戲狀態：待點火、暖火中、烹煮中、已完成、已熄滅
     public enum KitchenState { Unlit, Warming, Cooking, Done, Extinguished }
 
@@ -48,6 +51,12 @@ public class KitchenMiniGame : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
         // 綁定點火按鈕事件並獲取 CanvasGroup
         if (lightFireButton != null)
         {
@@ -151,6 +160,16 @@ public class KitchenMiniGame : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本檢查飯是否煮好
+    /// </summary>
+    [YarnFunction("is_food_done")]
+    public static bool IsFoodDone()
+    {
+        if (Instance == null) return false;
+        return Instance.state == KitchenState.Done;
     }
 
     /// <summary>
