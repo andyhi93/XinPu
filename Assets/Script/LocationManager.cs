@@ -63,10 +63,10 @@ public class LocationManager : MonoBehaviour
 
     public void GoToLocation(Location target)
     {
-        // 1. 若目前有 Yarn 對話在進行，不能切換
-        if (dialogueRunner != null && dialogueRunner.IsDialogueRunning)
+        // 1. 統一檢查是否可以切換地點
+        if (!CanSwitchLocation())
         {
-            Debug.LogWarning("【地點系統】對話進行中，禁止切換地點。");
+            Debug.LogWarning("【地點系統】目前狀態（對話或小遊戲中）禁止切換地點。");
             return;
         }
 
@@ -78,9 +78,6 @@ public class LocationManager : MonoBehaviour
 
         // 2. 通知地點已改變
         OnLocationChanged?.Invoke(currentLocation);
-
-        // 3. 這裡可以擴充觸發「抵達事件」的邏輯
-        // EventManager.Instance.CheckForArrivalEvents(currentLocation);
     }
 
     /// <summary>
@@ -88,7 +85,15 @@ public class LocationManager : MonoBehaviour
     /// </summary>
     public bool CanSwitchLocation()
     {
-        if (dialogueRunner == null) return true;
-        return !dialogueRunner.IsDialogueRunning;
+        // 1. 若目前有 Yarn 對話在進行，不能切換
+        if (dialogueRunner != null && dialogueRunner.IsDialogueRunning) return false;
+
+        // 2. 若目前正在小遊戲模式，不能切換
+        if (GameManager.Instance != null && GameManager.Instance.currentState != GameState.FreeRoam)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

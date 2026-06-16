@@ -43,13 +43,19 @@ public class CharacterController : MonoBehaviour
     }
 
     /// <summary>
-    /// 瞬移到指定 X 座標：<<teleport 角色名字 座標>>
+    /// 瞬移到指定座標：<<teleport 角色名字 X [Y]>>
+    /// 若沒有提供 Y，則保持原本的 Y 軸高度。
     /// </summary>
     [YarnCommand("teleport")]
-    public void Teleport(float x)
+    public void Teleport(float x, float y = -99999f)
     {
         Vector2 pos = rectTransform.anchoredPosition;
         pos.x = x;
+        // 如果傳入的 y 不是我們設定的極端預設值，就代表有傳入 Y 座標
+        if (y != -99999f)
+        {
+            pos.y = y;
+        }
         rectTransform.anchoredPosition = pos;
     }
 

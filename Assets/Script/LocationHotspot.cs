@@ -21,12 +21,16 @@ public class LocationHotspot : MonoBehaviour,
 
     public void OnPointerEnter(PointerEventData e)
     {
+        // 只有在可以切換地點時才顯示提示（避免在小遊戲或對話中產生誤導）
+        if (LocationManager.Instance != null && !LocationManager.Instance.CanSwitchLocation()) return;
+
         if (border != null) border.SetActive(true);
         if (label != null) label.SetActive(true);
     }
 
     public void OnPointerExit(PointerEventData e)
     {
+        // 離開時一律隱藏提示
         if (border != null) border.SetActive(false);
         if (label != null) label.SetActive(false);
     }
@@ -35,6 +39,7 @@ public class LocationHotspot : MonoBehaviour,
     {
         if (LocationManager.Instance != null)
         {
+            // GoToLocation 內部已經有檢查，但為了回饋明確，這裡也可以加
             LocationManager.Instance.GoToLocation(location);
         }
         else
