@@ -20,6 +20,7 @@ public class KitchenMiniGame : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statusText;   // 狀態文字顯示
     [SerializeField] private Button lightFireButton;  // 點火按鈕
     [SerializeField] private Button addWoodButton;    // 加柴按鈕
+    [SerializeField] private Button serveFoodButton;  // 盛飯按鈕
     [SerializeField] private GameObject kitchenGame;  // 整個小遊戲視窗物件
 
     [Header("可調參數")]
@@ -58,6 +59,11 @@ public class KitchenMiniGame : MonoBehaviour
         {
             addWoodButton.onClick.AddListener(OnClickAddWood);
             addWoodCG = addWoodButton.GetComponent<CanvasGroup>();
+        }
+        // 綁定盛飯按鈕事件
+        if (serveFoodButton != null)
+        {
+            serveFoodButton.onClick.AddListener(OnClickServeFood);
         }
     }
 
@@ -185,6 +191,12 @@ public class KitchenMiniGame : MonoBehaviour
         // 更新加柴按鈕可用性（在暖火或烹煮中，且動畫未執行時可用）
         bool addWoodInteractable = (state == KitchenState.Warming || state == KitchenState.Cooking) && !isAddingFire;
         SetButtonState(addWoodButton, addWoodCG, addWoodInteractable);
+
+        // 更新盛飯按鈕顯示狀態
+        if (serveFoodButton != null)
+        {
+            serveFoodButton.gameObject.SetActive(state == KitchenState.Done);
+        }
     }
 
     /// <summary>
@@ -263,6 +275,24 @@ public class KitchenMiniGame : MonoBehaviour
         {
             kitchenGame.SetActive(true);
             UpdateUI(); // 開啟時立即更新一次 UI
+        }
+    }
+
+    /// <summary>
+    /// 盛飯按鈕點擊事件
+    /// </summary>
+    public void OnClickServeFood()
+    {
+        if (kitchenGame != null)
+        {
+            kitchenGame.SetActive(false);
+        }
+
+        // 透過 GameManager 啟動對話，這會自動處理狀態切換
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.CloseKitchenGame(); // 先回到 FreeRoam 並切換地點
+            GameManager.Instance.StartDialogue("Scene_ServeFood"); // 接著啟動對話進入 Dialogue 模式
         }
     }
 
