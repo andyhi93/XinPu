@@ -4,6 +4,7 @@
 
 title: Scene_Morning
 ---
+<<set_time "卯">>
 <<bg house_am>>
 <<teleport Lan 0 -300>>
 <<light Lan>>
@@ -29,6 +30,64 @@ title: Scene_Morning
 <<teleport Lan -760 -395>>
 <<flip Lan R>>
 <<game_mode "FreeRoam">>
+===
+
+title: Scene_ServeFood
+---
+<<declare $served_grandfather = false>>
+<<declare $served_grandmother = false>>
+<<declare $served_child = false>>
+<<declare $served_self = false>>
+<<declare $served_any = false>>
+
+<<jump ServeFood_Loop>>
+===
+
+title: ServeFood_Loop
+---
+// 如果四個都選完了，跳到結束節點
+<<if $served_grandfather and $served_grandmother and $served_child and $served_self>>
+    <<jump ServeFood_Done>>
+<<endif>>
+
+<<if not $served_any>>
+阿蘭: （飯煮好了，先盛給誰呢？）
+<<set $served_any = true>>
+<<else>>
+阿蘭: （接下來先盛給誰呢？）
+<<endif>>
+
+-> 盛給阿公 <<if not $served_grandfather>>
+    : <i>盛了一碗地瓜簽粥。</i>
+    <<set $served_grandfather = true>>
+    <<jump ServeFood_Loop>>
+-> 盛給阿婆 <<if not $served_grandmother>>
+    : <i>盛了一碗地瓜簽粥。</i>
+    <<set $served_grandmother = true>>
+    <<jump ServeFood_Loop>>
+-> 盛給孩子 <<if not $served_child>>
+    : <i>盛了一碗地瓜簽粥。</i>
+    <<set $served_child = true>>
+    <<jump ServeFood_Loop>>
+-> 盛給自己 <<if not $served_self>>
+    <<if $served_grandfather and $served_grandmother and $served_child>>
+        : <i>別人都盛好了，才輪到自己。鍋底剩的不多了。</i>
+        阿蘭: （夠吃了。）
+    <<else>>
+        : <i>自己也盛了一碗。</i>
+    <<endif>>
+    <<set $served_self = true>>
+    <<jump ServeFood_Loop>>
+===
+
+title: ServeFood_Done
+---
+// 觸發 C# 方法，增加體力 (HP) 3
+//<<adjust_stat "health" 3>>
+// 觸發 C# 方法，推進時間 10 分鐘
+<<advance_time_minutes 10>>
+: <i>盛了一輪，日頭已經高了一點。</i>
+阿蘭: 端去廳堂給大家吃吧。
 ===
 
 title: Scene_02
@@ -323,3 +382,4 @@ title: Scene_06
 -> 帳先放著，明天再說，先去睡
     : <i>體力持平／財務壓力持續到明天</i>
 ===
+

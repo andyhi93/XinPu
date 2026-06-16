@@ -113,6 +113,61 @@ public class TimeManager : MonoBehaviour
         }
         UpdateBranchIndex();
     }
+
+    /// <summary>
+    /// 透過 Yarn Spinner 推進指定的分鐘數
+    /// </summary>
+    [YarnCommand("advance_time_minutes")]
+    public static void AdvanceTimeMinutes(float minutes)
+    {
+        if (Instance == null) return;
+        Instance.currentTimeInSeconds += minutes * 60f;
+        if (Instance.currentTimeInSeconds >= 24f * 3600f)
+        {
+            Instance.currentTimeInSeconds -= 24f * 3600f;
+        }
+        Instance.UpdateBranchIndex();
+    }
+
+    /// <summary>
+    /// 透過 Yarn Spinner 設定時間
+    /// 支援輸入時辰（如 "卯" 或 "卯時"）或 24 小時制數字（如 "5"、"14"）
+    /// </summary>
+    [YarnCommand("set_time")]
+    public static void SetTime(string timeInput)
+    {
+        if (Instance == null) return;
+
+        // 嘗試解析為數字 (24小時制)
+        if (int.TryParse(timeInput, out int hour))
+        {
+            hour = Mathf.Clamp(hour, 0, 23);
+            Instance.currentTimeInSeconds = hour * 3600f;
+            Debug.Log($"【TimeManager】時間已設定為 {hour}:00");
+        }
+        else
+        {
+            // 嘗試解析為時辰
+            string branchStr = timeInput.Replace("時", "").Trim();
+            int branchIndex = Array.IndexOf(Instance.earthlyBranches, branchStr);
+            
+            if (branchIndex != -1)
+            {
+                // 計算該時辰的起始小時
+                // 子(0) -> 23, 丑(1) -> 1, 寅(2) -> 3, 卯(3) -> 5
+                int startHour = (branchIndex * 2 - 1 + 24) % 24;
+                Instance.currentTimeInSeconds = startHour * 3600f;
+                Debug.Log($"【TimeManager】時間已設定為 {branchStr}時 ({startHour}:00)");
+            }
+            else
+            {
+                Debug.LogWarning($"【TimeManager】無法解析的時間格式：{timeInput}，請輸入 0~23 的數字或十二地支（例如：卯）。");
+                return;
+            }
+        }
+
+        Instance.UpdateBranchIndex(forceNotify: true);
+    }
     
     /// <summary>
     /// 回傳當前一天的進度 (0.0 到 1.0)

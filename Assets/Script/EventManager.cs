@@ -274,10 +274,9 @@ public class EventManager : MonoBehaviour
 
     private void ApplyEffects(List<StatChange> effects)
     {
-        if (ResourceManager.Instance == null) return;
         foreach (var effect in effects)
         {
-            ResourceManager.Instance.AdjustStat(effect.statName, effect.amount);
+            ResourceManager.AdjustStat(effect.statName, effect.amount);
         }
     }
 
