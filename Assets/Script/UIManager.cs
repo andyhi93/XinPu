@@ -122,14 +122,12 @@ public class UIManager : MonoBehaviour
             moodFill.fillAmount = currentMood / 100f;
             
             // 顏色邏輯： > 60 正常，30-60 黃色，< 30 紅色
-            /*
             if (currentMood > 60)
                 moodFill.color = moodHighColor;
             else if (currentMood >= 30)
                 moodFill.color = moodMidColor;
             else
                 moodFill.color = moodLowColor;
-            */
         }
     }
 
