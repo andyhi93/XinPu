@@ -10,7 +10,7 @@ public class ResourceManager : MonoBehaviour
     public enum FavorLevel { 差, 普通, 好 }
 
     [Header("基礎數值")]
-    [SerializeField] private int health = 10;
+    [SerializeField] private int health = 100;
     [SerializeField] private int mood = 100;
     [SerializeField] private int money = 100;
     [SerializeField] private FavorLevel motherInLawFavor = FavorLevel.普通;
@@ -67,7 +67,7 @@ public class ResourceManager : MonoBehaviour
         switch (statName.ToLower())
         {
             case "health":
-                Instance.health = Mathf.Clamp(Instance.health + intAmount, 0, 10);
+                Instance.health = Mathf.Clamp(Instance.health + intAmount, 0, 100);
                 Instance.NotifyChange("health", Instance.health);
                 if (Instance.health <= 0) Instance.HandleHealthExhausted();
                 break;
@@ -140,7 +140,7 @@ public class ResourceManager : MonoBehaviour
         switch (statName.ToLower())
         {
             case "health":
-                Instance.health = Mathf.Clamp(intValue, 0, 10);
+                Instance.health = Mathf.Clamp(intValue, 0, 100);
                 Instance.NotifyChange("health", Instance.health);
                 break;
             case "mood":

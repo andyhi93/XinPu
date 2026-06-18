@@ -145,7 +145,7 @@ title: Scene_DiningHall
 : <i>等孩子吃得差不多，我才端起自己那碗。</i>
 : <i>粥還溫，站著喝完。</i>
 
-<<adjust_stat "health" 2>>
+<<adjust_stat "health" 20>>
 
 : <i>填了些東西，身子稍微有力氣了。</i>
 ===
@@ -369,38 +369,38 @@ title: Scene_06
 ---
 <<bg house_pm>>
 <<show auntie false>>
-<<show popo true>>
-<<teleport popo -300>>
-<<flip popo>>
-<<dim popo>>
+<<show mother true>>
+<<teleport mother -300>>
+<<flip mother>>
+<<dim mother>>
 <<teleport Lan 300>>
 <<light Lan>>
 : <i>飯煮好了，家裡的人吃完各自散去。她把剩下的扒完，站起來收拾。洗澡水燒了兩鍋，公公、丈夫、孩子輪流用完，剩下的那鍋她摸了摸——已經不太熱了。</i>
 阿蘭: （涼水也是水，洗了就好啊。）
 : <i>洗完出來，廳堂還亮著燈。婆婆坐在燈下，看見她進來。</i>
 <<dim Lan>>
-<<light popo>>
+<<light mother>>
 婆婆: 這件破了多久了，現在才補啊？
-<<dim popo>>
+<<dim mother>>
 <<light Lan>>
 阿蘭: 今天比較忙，沒來得及哦，阿婆。
 <<dim Lan>>
-<<light popo>>
+<<light mother>>
 婆婆: 忙。天天都忙，針線的事還是不能放。
-<<dim popo>>
+<<dim mother>>
 <<light Lan>>
 阿蘭: （她說的是，我記住了。）
 : <i>主角低頭縫，沒有再說話。燈光昏黃，針腳要靠近了才看得清。</i>
 <<dim Lan>>
-<<light popo>>
+<<light mother>>
 婆婆: 這針腳歪了，重來。
-<<dim popo>>
+<<dim mother>>
 <<light Lan>>
 阿蘭: 好，我來拆。
 <<dim Lan>>
-<<light popo>>
+<<light mother>>
 婆婆: 我先去睡了，你們的事自己顧好。
-<<show popo false>>
+<<show mother false>>
 <<light Lan>>
 : <i>婆婆走了。廳堂只剩她一個人和那盞燈。</i>
 阿蘭: （針腳哪裡歪了——但她說歪了，就重來一遍。）
@@ -495,5 +495,83 @@ title: PigPen_Loop
     <<jump PigPen_Loop>>
 -> 離開
     <<go_to_location 0>>
+===
+
+title: Scene_MorningLate
+---
+<<bg kitchen>>
+<<show mother true>>
+<<teleport mother -300>>
+<<teleport Lan 300>>
+<<light mother>>
+<<dim Lan>>
+
+: <i>婆婆走進灶房。火是冷的，鍋是空的。</i>
+
+婆婆: 這都什麼時辰了咧，灶還沒點？
+: <i>她沒有等回答，已經自己蹲下去點火了。</i>
+婆婆: 罷了罷了，我來。你去把柴添上，就這點事也慢吞吞。
+
+<<dim mother>>
+<<light Lan>>
+阿蘭: （我剛才在外面——但說了也沒用。）
+阿蘭: 好，阿婆，我來添。
+<<dim Lan>>
+<<light mother>>
+婆婆: 我年輕那陣，灶火哪有冷到這個時候過。你去問問阿公。
+<<dim mother>>
+<<light Lan>>
+: <i>阿蘭沒有說話，把柴往灶裡塞，火苗往上竄。</i>
+<<dim Lan>>
+<<light mother>>
+婆婆: 阿寶都餓咧，你沒聽見他叫嗎？
+<<dim mother>>
+<<light Lan>>
+阿蘭: （有聽見。但我一個人，哪裡分得了這麼多。）
+<<dim Lan>>
+<<light mother>>
+婆婆: 站在那裡做什麼，過來幫我攪粥！
+: <i>她把鏟子塞過來，沒有看阿蘭的臉。</i>
+婆婆: 做媳婦的要自己上心，不是等人叫咧。
+<<dim mother>>
+<<light Lan>>
+阿蘭: 是，阿婆說的是。
+阿蘭: （說是，吞下去，繼續攪。粥燒起來了，香氣出來了——但今天這一鍋，不是我煮的。）
+
+<<adjust_stat "mood" -15>>
+<<advance_time_minutes 60>>
+<<show mother false>>
+<<jump Scene_MorningLate_Hall>>
+===
+
+title: Scene_MorningLate_Hall
+---
+<<bg hall>>
+<<show mother true>>
+<<teleport mother -400>>
+<<dim mother>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+婆婆: 好了，端去廳堂，叫大家吃飯。
+: <i>婆婆把碗一一排好，推給阿蘭。</i>
+<<dim Lan>>
+<<light mother>>
+婆婆: 快去，別讓阿公等咧。
+<<dim mother>>
+<<light Lan>>
+阿蘭: 是，阿婆。
+: <i>她把碗端進廳堂，一碗一碗放上桌。</i>
+: <i>最後那碗是她自己的。</i>
+: <i>她看了一眼。</i>
+阿蘭: （……少了很多。）
+: <i>阿公那碗，粥是滿的。阿寶那碗，婆婆親手盛的。她這碗——鍋底刮來的，稀薄，看得見底。</i>
+阿蘭: （她知道我看見了。）
+: <i>她把碗端起來，站在桌邊喝完。沒有坐下。</i>
+阿蘭: （夠了。能走路就夠了。）
+
+<<adjust_stat "health" 10>>
+<<show mother false>>
+<<game_mode "FreeRoam">>
 ===
 

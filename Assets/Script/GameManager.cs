@@ -200,6 +200,24 @@ public class GameManager : MonoBehaviour
         dialogueRunner.onDialogueComplete.AddListener(OnDialogueComplete);
     }
 
+    /// <summary>
+    /// 強制啟動對話（中斷當前狀態）
+    /// </summary>
+    public void ForceStartDialogue(string nodeName)
+    {
+        if (dialogueRunner == null) return;
+
+        if (dialogueRunner.IsDialogueRunning)
+        {
+            dialogueRunner.Stop();
+        }
+
+        Debug.Log($"【GameManager】強制啟動劇情：{nodeName}");
+        SetGameState(GameState.Dialogue);
+        dialogueRunner.StartDialogue(nodeName);
+        dialogueRunner.onDialogueComplete.AddListener(OnDialogueComplete);
+    }
+
     private void OnDialogueComplete()
     {
         SetGameState(GameState.FreeRoam);

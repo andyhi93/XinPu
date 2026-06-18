@@ -17,6 +17,8 @@ public class TimeManager : MonoBehaviour
     // 當前遊戲時間（秒，範圍 0 到 86400）
     private float currentTimeInSeconds;
     private int currentBranchIndex = -1;
+    private int lastHealthDeductionIndex = -1; // 用來紀錄上一次扣過體力的時辰索引
+    private bool hasTriggeredMorningLate = false; // 是否已觸發過「遲到的早餐」事件
 
     // 十二地支映射
     private readonly string[] earthlyBranches = {
@@ -55,9 +57,35 @@ public class TimeManager : MonoBehaviour
         if (currentTimeInSeconds >= 24f * 3600f)
         {
             currentTimeInSeconds -= 24f * 3600f;
+            hasTriggeredMorningLate = false; // 每日重置觸發狀態
         }
 
+        CheckForTimeEvents();
         UpdateBranchIndex();
+    }
+
+    private void CheckForTimeEvents()
+    {
+        // 08:00 = 8 * 3600 = 28800 秒
+        if (!hasTriggeredMorningLate && currentTimeInSeconds >= 28800f)
+        {
+            // 檢查飯是否煮好
+            bool isFoodDone = KitchenMiniGame.IsFoodDone();
+            
+            if (!isFoodDone)
+            {
+                hasTriggeredMorningLate = true;
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.ForceStartDialogue("Scene_MorningLate");
+                }
+            }
+            else
+            {
+                // 如果已經煮好了，今天就不再檢查（直到隔天重置）
+                hasTriggeredMorningLate = true;
+            }
+        }
     }
 
     private void UpdateBranchIndex(bool forceNotify = false)
@@ -72,6 +100,15 @@ public class TimeManager : MonoBehaviour
 
         if (newIndex != currentBranchIndex || forceNotify)
         {
+            // 如果不是初始強制通知，且索引真的改變了，則扣除體力
+            if (!forceNotify && currentBranchIndex != -1 && newIndex != currentBranchIndex)
+            {
+                if (ResourceManager.Instance != null)
+                {
+                    ResourceManager.AdjustStat("health", -8f);
+                }
+            }
+
             currentBranchIndex = newIndex;
             OnTimePeriodChanged?.Invoke(GetCurrentTime());
             Debug.Log($"時段已切換：{GetCurrentTime()}時");
@@ -102,6 +139,19 @@ public class TimeManager : MonoBehaviour
         isGamePaused = false;
     }
     
+    [ContextMenu("Advance 1 Hour")]
+    public void AdvanceOneHour()
+    {
+        // 手動推進一個小時（3600 秒）
+        currentTimeInSeconds += 3600f;
+        if (currentTimeInSeconds >= 24f * 3600f)
+        {
+            currentTimeInSeconds -= 24f * 3600f;
+        }
+        UpdateBranchIndex();
+        Debug.Log("【TimeManager】已手動推進 1 小時");
+    }
+
     [YarnCommand("advance_time")]
     public void AdvanceTime()
     {

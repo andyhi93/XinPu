@@ -8,10 +8,15 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     [Header("體力 (Health)")]
-    public Transform healthSlotsParent; // 拖入 Health_Row 容器
-    private List<GameObject> healthSlots = new List<GameObject>();
+    public Slider healthSlider;
+    public Image healthFill;
+    public TMP_Text healthText;
+    public Color healthHighColor = Color.white;
+    public Color healthMidColor = Color.yellow;
+    public Color healthLowColor = Color.red;
 
     [Header("心情 (Mood)")]
+    public Slider moodSlider;
     public Image moodFill;
     public TMP_Text moodText;
     public Color moodHighColor = Color.white;
@@ -39,15 +44,6 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
-        // 0. 自動抓取體力格子
-        if (healthSlotsParent != null)
-        {
-            foreach (Transform child in healthSlotsParent)
-            {
-                healthSlots.Add(child.gameObject);
-            }
-        }
-
         // 1. 監聽資源變化
         if (ResourceManager.Instance != null)
         {
@@ -105,21 +101,31 @@ public class UIManager : MonoBehaviour
 
     private void UpdateHealth(int currentHealth)
     {
-        if (healthSlots == null || healthSlots.Count == 0) return;
-
-        for (int i = 0; i < healthSlots.Count; i++)
+        float ratio = currentHealth / 100f;
+        if (healthSlider != null) healthSlider.value = ratio;
+        if (healthText != null) healthText.text = $"{currentHealth}%";
+        if (healthFill != null)
         {
-            // 如果當前索引小於體力值，則顯示，否則隱藏
-            healthSlots[i].SetActive(i < currentHealth);
+            healthFill.fillAmount = ratio;
+            
+            // 顏色邏輯： > 60% 正常, 30-60% 黃色, < 30% 紅色
+            if (currentHealth > 60)
+                healthFill.color = healthHighColor;
+            else if (currentHealth >= 30)
+                healthFill.color = healthMidColor;
+            else
+                healthFill.color = healthLowColor;
         }
     }
 
     private void UpdateMood(int currentMood)
     {
+        float ratio = currentMood / 100f;
+        if (moodSlider != null) moodSlider.value = ratio;
         if (moodText != null) moodText.text = $"{currentMood}%";
         if (moodFill != null)
         {
-            moodFill.fillAmount = currentMood / 100f;
+            moodFill.fillAmount = ratio;
             
             // 顏色邏輯： > 60 正常，30-60 黃色，< 30 紅色
             if (currentMood > 60)
