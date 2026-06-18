@@ -455,3 +455,45 @@ title: Scene_KitchenMenu
     <<go_to_location 0>>
 ===
 
+title: Scene_PigPen
+---
+<<declare $chicken_released = false>>
+<<declare $chicken_fed = false>>
+<<declare $pig_fed = false>>
+<<jump PigPen_Loop>>
+===
+
+title: PigPen_Loop
+---
+<<if $chicken_fed and $pig_fed>>
+    阿蘭: （事情暫時做完了，晚點再來顧。）
+<<else>>
+    阿蘭: （豬欄這邊有幾件事。）
+<<endif>>
+
+-> 放雞出來 <<if not $chicken_released>>
+    : <i>打開雞舍的門，雞撲撲地跑出來。</i>
+    <<set $chicken_released = true>>
+    <<jump PigPen_Loop>>
+-> 灑穀物 <<if $chicken_released and not $chicken_fed>>
+    : <i>抓了一把穀物灑出去，雞搶著啄食。</i>
+    <<set $chicken_fed = true>>
+    <<jump PigPen_Loop>>
+-> 灑穀物（還沒放雞）<<if not $chicken_released>>
+    : <i>雞還關著，先把門打開。</i>
+    <<jump PigPen_Loop>>
+-> 餵豬 <<if is_pig_food_done() and not $pig_fed>>
+    : <i>把豬菜倒進豬槽，豬哼哼地湊過來。</i>
+    <<set $pig_fed = true>>
+    <<adjust_stat "livestock" 10>>
+    <<jump PigPen_Loop>>
+-> 餵豬（豬菜還在煮）<<if is_pig_food_cooking() and not $pig_fed>>
+    : <i>豬菜還沒好，等一下再來。</i>
+    <<jump PigPen_Loop>>
+-> 餵豬（還沒開始做）<<if not is_pig_food_cooking() and not is_pig_food_done() and not $pig_fed>>
+    : <i>還沒準備豬菜，先去灶房處理。</i>
+    <<jump PigPen_Loop>>
+-> 離開
+    <<go_to_location 0>>
+===
+

@@ -55,6 +55,9 @@ public class GameManager : MonoBehaviour
         {
             dialogueRunner.AddCommandHandler("open_kitchen", OpenKitchenGame);
             dialogueRunner.AddCommandHandler("open_pig_food", OpenPigFoodGame);
+            
+            dialogueRunner.AddFunction("is_pig_food_done", () => pigFoodGame != null && pigFoodGame.IsPigFoodDone());
+            dialogueRunner.AddFunction("is_pig_food_cooking", () => pigFoodGame != null && pigFoodGame.IsPigFoodCooking());
         }
 
         // 初始自動啟動
@@ -96,6 +99,11 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("【GameManager】進入廳堂，觸發對話。");
             StartDialogue("Scene_Hall");
+        }
+        else if (newLocation == LocationManager.Location.豬欄)
+        {
+            Debug.Log("【GameManager】進入豬欄，觸發對話。");
+            StartDialogue("Scene_PigPen");
         }
     }
 

@@ -34,6 +34,7 @@ public class PigFoodMiniGame : MonoBehaviour
     [SerializeField] private bool isAtStove = false;      // 是否已下鍋 (進入 CookSection)
     [SerializeField] private bool isCooking = false;
     [SerializeField] private bool isDone = false;
+    [SerializeField] private bool hasCollected = false;   // 是否已盛出豬菜
     [SerializeField] private float cookProgress = 0f;
     [SerializeField] private float fireLevel = 0f;
     [SerializeField] private float fuelLevel = 0f;
@@ -75,7 +76,7 @@ public class PigFoodMiniGame : MonoBehaviour
         }
         if (serveFoodButton != null)
         {
-            serveFoodButton.onClick.AddListener(OnClickExit); // 盛菜完後退出
+            serveFoodButton.onClick.AddListener(OnClickServeFood);
         }
     }
 
@@ -89,7 +90,7 @@ public class PigFoodMiniGame : MonoBehaviour
     {
         if (chopSection != null) chopSection.SetActive(!isAtStove);
         if (cookSection != null) cookSection.SetActive(isAtStove);
-        if (serveFoodButton != null) serveFoodButton.gameObject.SetActive(isDone);
+        if (serveFoodButton != null) serveFoodButton.gameObject.SetActive(isDone && !hasCollected);
     }
 
     /// <summary>
@@ -122,9 +123,13 @@ public class PigFoodMiniGame : MonoBehaviour
     {
         if (!isAtStove) return;
         
-        isCooking = true;
         fireLevel = Mathf.Min(1.0f, fireLevel + 0.5f);
         fuelLevel = Mathf.Min(1.0f, fuelLevel + 0.5f);
+        
+        if (fireLevel >= 1.0f)
+        {
+            isCooking = true;
+        }
         UpdateUI();
     }
 
@@ -137,14 +142,12 @@ public class PigFoodMiniGame : MonoBehaviour
         Debug.Log("【豬菜小遊戲】加柴！燃料與火力補滿。");
         fireLevel = 1.0f;
         fuelLevel = 1.0f;
+        isCooking = true;
         UpdateUI();
     }
 
     private void Update()
     {
-        // 若視窗未開啟，則不執行邏輯
-        if (pigFoodGame == null || !pigFoodGame.activeSelf) return;
-        
         // 若非烹煮中或已完成，則不更新進度
         if (!isCooking || isDone) return;
 
@@ -155,13 +158,19 @@ public class PigFoodMiniGame : MonoBehaviour
             cookProgress = Mathf.Min(1.0f, cookProgress);
         }
         
+        bool justFinished = false;
         if (cookProgress >= 1.0f)
         {
             isDone = true;
-            RefreshSections(); // 顯示盛菜按鈕
+            justFinished = true;
         }
         
-        UpdateUI();
+        // 視窗開啟時才更新 UI 表現
+        if (pigFoodGame != null && pigFoodGame.activeSelf)
+        {
+            if (justFinished) RefreshSections();
+            UpdateUI();
+        }
     }
 
     /// <summary>
@@ -181,7 +190,12 @@ public class PigFoodMiniGame : MonoBehaviour
             else
             {
                 if (!isCooking)
-                    messageText.text = "準備點火";
+                {
+                    if (fireLevel > 0)
+                        messageText.text = "需要加柴";
+                    else
+                        messageText.text = "準備點火";
+                }
                 else
                     messageText.text = isDone ? "豬菜好了" : "烹煮中";
             }
@@ -219,6 +233,19 @@ public class PigFoodMiniGame : MonoBehaviour
     }
 
     /// <summary>
+    /// 盛菜按鈕點擊事件 (煮完後)
+    /// </summary>
+    public void OnClickServeFood()
+    {
+        if (isDone && !hasCollected)
+        {
+            hasCollected = true;
+            RefreshSections();
+            OnClickExit(); // 盛出後自動關閉視窗
+        }
+    }
+
+    /// <summary>
     /// 退出按鈕點擊事件
     /// </summary>
     public void OnClickExit()
@@ -236,14 +263,14 @@ public class PigFoodMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// 供外部或 Yarn 檢查豬菜是否完成
+    /// 供外部或 Yarn 檢查豬菜是否完成並盛出
     /// </summary>
-    public bool IsPigFoodDone() => isDone;
+    public bool IsPigFoodDone() => hasCollected;
 
     /// <summary>
-    /// 供外部或 Yarn 檢查豬菜是否正在烹煮中（且尚未完成）
+    /// 供外部或 Yarn 檢查豬菜是否正在烹煮中（包含已完成但尚未盛出）
     /// </summary>
-    public bool IsPigFoodCooking() => isCooking && !isDone;
+    public bool IsPigFoodCooking() => isCooking && !hasCollected;
 
     /// <summary>
     /// 開啟豬菜小遊戲視窗
@@ -253,25 +280,8 @@ public class PigFoodMiniGame : MonoBehaviour
         if (pigFoodGame != null)
         {
             pigFoodGame.SetActive(true);
+            RefreshSections(); // 確保重新開啟時，介面區塊顯示正確 (例如：背景煮好時顯示盛菜按鈕)
             UpdateUI();
         }
-    }
-
-    /// <summary>
-    /// Yarn 函數：檢查豬菜是否完成
-    /// </summary>
-    [YarnFunction("is_pig_food_done")]
-    public static bool IsPigFoodDoneStatic()
-    {
-        return Instance != null && Instance.IsPigFoodDone();
-    }
-
-    /// <summary>
-    /// Yarn 函數：檢查豬菜是否正在烹煮中
-    /// </summary>
-    [YarnFunction("is_pig_food_cooking")]
-    public static bool IsPigFoodCookingStatic()
-    {
-        return Instance != null && Instance.IsPigFoodCooking();
     }
 }

@@ -85,6 +85,10 @@ public class ResourceManager : MonoBehaviour
                 Instance.motherInLawFavor = (FavorLevel)Mathf.Clamp(current + intAmount, 0, 2);
                 Instance.NotifyChange("mother_in_law_favor", Instance.motherInLawFavor);
                 break;
+            case "livestock":
+                Instance.livestock_satisfaction = Mathf.Clamp(Instance.livestock_satisfaction + intAmount, 0, 100);
+                Instance.NotifyChange("livestock", Instance.livestock_satisfaction);
+                break;
             default:
                 Debug.LogWarning($"在 AdjustStat 中找不到數值： {statName}");
                 break;
@@ -105,6 +109,7 @@ public class ResourceManager : MonoBehaviour
             case "mood": return Instance.mood;
             case "money": return Instance.money;
             case "mother_in_law_favor": return (int)Instance.motherInLawFavor;
+            case "livestock": return Instance.livestock_satisfaction;
             default:
                 Debug.LogWarning($"【ResourceManager】試圖取得不存在的數值：{statName}");
                 return 0f;
