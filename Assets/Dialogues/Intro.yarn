@@ -443,6 +443,20 @@ title: Scene_06
     : <i>體力持平／財務壓力持續到明天</i>
 ===
 
+title: Scene_FreeRoam
+---
+<<show father false>>
+<<show mother false>>
+<<show child false>>
+<<show worker false>>
+<<show husband false>>
+<<show uncle false>>
+<<show auntie false>>
+<<teleport Lan 760 -395>>
+<<game_mode "FreeRoam">>
+<<flip Lan L>>
+===
+
 title: Scene_KitchenMenu
 ---
 阿蘭: （灶房裡有幾件事要做。）
@@ -575,3 +589,94 @@ title: Scene_MorningLate_Hall
 <<game_mode "FreeRoam">>
 ===
 
+title: Scene_Outside_Menu
+---
+阿蘭: （要去哪裡咧？）
+
+-> 送便當去田邊 <<if is_food_done() and not is_lunch_delivered()>>
+    <<jump Scene_LunchDelivery>>
+-> 送便當去田邊（飯還沒煮好） <<if not is_food_done() and not is_lunch_delivered()>>
+    阿蘭: （便當還沒準備好，不能去田裡啊。）
+    <<jump Scene_Outside_Menu>>
+-> 送便當去田邊（今天已經送過了） <<if is_lunch_delivered()>>
+    阿蘭: （今天已經送過便當了，不用再送一次。）
+    <<jump Scene_Outside_Menu>>
+-> 去洗衫窟
+    <<jump Scene_Laundry>>
+-> 去第一市場
+    <<jump Scene_Market>>
+-> 先不出去
+    <<go_to_location 0>>
+===
+
+title: Scene_Laundry
+---
+阿蘭: （今天先不去。）
+<<go_to_location 0>>
+===
+
+title: Scene_Market
+---
+阿蘭: （今天先不去。）
+<<go_to_location 0>>
+===
+
+title: Scene_LunchDelivery
+---
+<<bg field>>
+<<show husband true>>
+<<teleport husband -300>>
+<<dim husband>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>田邊的風比曬場小，太陽卻更曬。她把便當遞過去。</i>
+
+<<mark_lunch_delivered>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 來了。
+<<dim husband>>
+<<light Lan>>
+: <i>他接過去，沒有多說。她站在旁邊，看他打開來吃。</i>
+阿蘭: （他吃，我看著。這也是一種陪伴吧。）
+
+<<adjust_favorability "husband" 5>>
+<<adjust_stat "health" -2>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 曬場那邊顧好了？
+<<dim husband>>
+<<light Lan>>
+阿蘭: 顧好了，你吃你的。
+<<dim Lan>>
+<<light husband>>
+丈夫: 嗯。
+<<dim husband>>
+<<light Lan>>
+: <i>他低頭繼續吃。回去的路上，看到路邊有長得不錯的地瓜葉。</i>
+
+-> 順手摘一把地瓜葉再回去
+    阿蘭: （空手回去是浪費，摘一點回去加菜。）
+    <<set $has_sweet_potato_leaves = true>>
+    <<advance_time_minutes 10>>
+    : <i>花了點時間，摘了一把地瓜葉。</i>
+    阿蘭: （摘好了，該回去了——還是再站一下？）
+    -> 就這樣回去
+        <<go_to_location 0>>
+    -> 在田邊再站一下
+        : <i>風吹過來，稻葉輕輕響。</i>
+        阿蘭: （就一下下。）
+        <<adjust_stat "mood" 5>>
+        <<advance_time_minutes 10>>
+-> 在田邊站一下再走
+    : <i>風吹過來，稻葉輕輕響。這裡沒有人叫她做什麼。</i>
+    阿蘭: （就站一下下。）
+    <<adjust_stat "mood" 5>>
+    <<advance_time_minutes 10>>
+-> 直接回去
+<<go_to_location 0>>
+<<advance_time_minutes 10>>
+<<adjust_stat "health" -2>>
+<<jump Scene_FreeRoam>>
+===

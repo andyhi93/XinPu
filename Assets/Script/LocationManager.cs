@@ -14,7 +14,8 @@ public class LocationManager : MonoBehaviour
         廊道 = 2,      // 竹篩風乾區
         灶房 = 3,
         廳堂 = 4,
-        豬欄 = 5
+        豬欄 = 5,
+        外出 = 6
     }
 
     [Header("狀態")]

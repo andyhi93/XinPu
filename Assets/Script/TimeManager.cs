@@ -16,6 +16,7 @@ public class TimeManager : MonoBehaviour
 
     // 當前遊戲時間（秒，範圍 0 到 86400）
     private float currentTimeInSeconds;
+    public float CurrentTimeInSeconds => currentTimeInSeconds;
     private int currentBranchIndex = -1;
     private int lastHealthDeductionIndex = -1; // 用來紀錄上一次扣過體力的時辰索引
     private bool hasTriggeredMorningLate = false; // 是否已觸發過「遲到的早餐」事件

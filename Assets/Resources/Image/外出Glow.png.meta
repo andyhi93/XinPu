@@ -1,10 +1,31 @@
 fileFormatVersion: 2
-guid: 5643d9d0d63694d44a2198c0d768b018
+guid: 1ed15651d848b2c42941ffe0af3cffdf
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8598898469025206818
-    second: "\u9580\u53E3Glow_0"
+      213: 1771949061212854814
+    second: "\u5916\u51FAGlow_0"
+  - first:
+      213: 2694866745537937874
+    second: "\u5916\u51FAGlow_1"
+  - first:
+      213: 2491816612660043482
+    second: "\u5916\u51FAGlow_2"
+  - first:
+      213: -4060926727927060031
+    second: "\u5916\u51FAGlow_3"
+  - first:
+      213: 3534003980985618906
+    second: "\u5916\u51FAGlow_4"
+  - first:
+      213: 6105047577384814194
+    second: "\u5916\u51FAGlow_5"
+  - first:
+      213: 581967802561243851
+    second: "\u5916\u51FAGlow_6"
+  - first:
+      213: -8505149436916766039
+    second: "\u5916\u51FAGlow_7"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +67,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +134,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\u8C6C\u820DGlow_0"
+      name: "\u5916\u51FAGlow_0"
       rect:
         serializedVersion: 2
-        x: 1259
-        y: 311
-        width: 440
-        height: 406
+        x: 744
+        y: 61
+        width: 474
+        height: 335
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,20 +149,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 33890727a4f641360800000000000000
-      internalID: 7139453674827323443
+      spriteID: e1adda1784a379810800000000000000
+      internalID: 1771949061212854814
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "\u8C6C\u820DGlow_1"
+      name: "\u5916\u51FAGlow_1"
       rect:
         serializedVersion: 2
-        x: 1260
-        y: 637
-        width: 9
-        height: 9
+        x: 942
+        y: 388
+        width: 7
+        height: 7
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -150,19 +171,19 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4b7c8b8d4ce67f5f0800000000000000
-      internalID: -722987423441041484
+      spriteID: 2d14dcce607166520800000000000000
+      internalID: 2694866745537937874
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "\u8C6C\u820DGlow_2"
+      name: "\u5916\u51FAGlow_2"
       rect:
         serializedVersion: 2
-        x: 1687
-        y: 491
-        width: 10
+        x: 948
+        y: 387
+        width: 7
         height: 8
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -172,19 +193,107 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b49ee7756f1a6f080800000000000000
-      internalID: -9153951113181992629
+      spriteID: aded40bc106b49220800000000000000
+      internalID: 2491816612660043482
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "\u8C6C\u820DGlow_3"
+      name: "\u5916\u51FAGlow_3"
       rect:
         serializedVersion: 2
-        x: 1692
-        y: 499
-        width: 6
+        x: 968
+        y: 388
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c9a40b18a0b4a7c0800000000000000
+      internalID: -4060926727927060031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u5916\u51FAGlow_4"
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 389
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad1d67195ed4b0130800000000000000
+      internalID: 3534003980985618906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u5916\u51FAGlow_5"
+      rect:
+        serializedVersion: 2
+        x: 744
+        y: 293
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27681eafc6c79b450800000000000000
+      internalID: 6105047577384814194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u5916\u51FAGlow_6"
+      rect:
+        serializedVersion: 2
+        x: 1094
+        y: 61
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcaa06e02a0931800800000000000000
+      internalID: 581967802561243851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: "\u5916\u51FAGlow_7"
+      rect:
+        serializedVersion: 2
+        x: 1132
+        y: 61
+        width: 7
         height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -194,8 +303,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b0610655aa3b776a0800000000000000
-      internalID: -6451490397026773493
+      spriteID: 9aa66fa36a3a7f980800000000000000
+      internalID: -8505149436916766039
       vertices: []
       indices: 
       edges: []
@@ -204,7 +313,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -214,10 +323,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "\u8C6C\u820DGlow_0": 7139453674827323443
-      "\u8C6C\u820DGlow_1": -722987423441041484
-      "\u8C6C\u820DGlow_2": -9153951113181992629
-      "\u8C6C\u820DGlow_3": -6451490397026773493
+      "\u5916\u51FAGlow_0": 1771949061212854814
+      "\u5916\u51FAGlow_1": 2694866745537937874
+      "\u5916\u51FAGlow_2": 2491816612660043482
+      "\u5916\u51FAGlow_3": -4060926727927060031
+      "\u5916\u51FAGlow_4": 3534003980985618906
+      "\u5916\u51FAGlow_5": 6105047577384814194
+      "\u5916\u51FAGlow_6": 581967802561243851
+      "\u5916\u51FAGlow_7": -8505149436916766039
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

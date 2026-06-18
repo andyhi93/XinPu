@@ -31,6 +31,12 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            // 確保 LunchDeliveryManager 存在
+            if (GetComponent<LunchDeliveryManager>() == null)
+            {
+                gameObject.AddComponent<LunchDeliveryManager>();
+            }
         }
         else
         {
@@ -104,6 +110,11 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("【GameManager】進入豬欄，觸發對話。");
             StartDialogue("Scene_PigPen");
+        }
+        else if (newLocation == LocationManager.Location.外出)
+        {
+            Debug.Log("【GameManager】進入外出地點，觸發對話。");
+            StartDialogue("Scene_Outside_Menu");
         }
     }
 
