@@ -298,6 +298,18 @@ public class KitchenMiniGame : MonoBehaviour
     }
 
     /// <summary>
+    /// 開啟廚房煮飯小遊戲視窗
+    /// </summary>
+    public void OpenKitchenWindow()
+    {
+        if (kitchenGame != null)
+        {
+            kitchenGame.SetActive(true);
+            UpdateUI();
+        }
+    }
+
+    /// <summary>
     /// 盛飯按鈕點擊事件
     /// </summary>
     public void OnClickServeFood()

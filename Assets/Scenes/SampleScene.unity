@@ -5361,6 +5361,7 @@ MonoBehaviour:
   currentState: 1
   persimmonGame: {fileID: 1754992524}
   kitchenGame: {fileID: 61632157}
+  pigFoodGame: {fileID: 1344681424}
 --- !u!1 &690914421
 GameObject:
   m_ObjectHideFlags: 0
@@ -6667,8 +6668,8 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: KitchenMiniGame, Assembly-CSharp
+      - m_Target: {fileID: 1344681424}
+        m_TargetAssemblyTypeName: PigFoodMiniGame, Assembly-CSharp
         m_MethodName: OnClickExit
         m_Mode: 1
         m_Arguments:
@@ -7630,7 +7631,7 @@ GameObject:
   - component: {fileID: 938472043}
   - component: {fileID: 938472044}
   m_Layer: 5
-  m_Name: 'Fire_Bar_Group '
+  m_Name: 'Cook_Bar_Group '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11177,7 +11178,7 @@ MonoBehaviour:
   chopButton: {fileID: 971682102}
   addToStoveButton: {fileID: 1647547006}
   fireButton: {fileID: 787991432}
-  addWoodButton: {fileID: 787991432}
+  addWoodButton: {fileID: 2059494335}
   serveFoodButton: {fileID: 168703085}
   cookProgressBar: {fileID: 938472044}
   fireBar: {fileID: 695621709}

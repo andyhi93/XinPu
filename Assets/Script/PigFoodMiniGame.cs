@@ -5,7 +5,7 @@ using Yarn.Unity;
 
 /// <summary>
 /// 豬菜小遊戲控制器
-/// 負責剁菜及烹煮進度管理，並與 Yarn Spinner 對話系統整合
+/// 負責剁菜及烹煮進度 management，並與 Yarn Spinner 對話系統整合
 /// </summary>
 public class PigFoodMiniGame : MonoBehaviour
 {
@@ -41,7 +41,7 @@ public class PigFoodMiniGame : MonoBehaviour
     private CanvasGroup chopButtonCG;
     private CanvasGroup addToStoveButtonCG;
     private CanvasGroup fireButtonCG;
-    private CanvasGroup addWoodButtonCG;
+    private CanvasGroup addWoodCG;
 
     private void Awake()
     {
@@ -71,11 +71,11 @@ public class PigFoodMiniGame : MonoBehaviour
         if (addWoodButton != null)
         {
             addWoodButton.onClick.AddListener(OnClickAddWood);
-            addWoodButtonCG = addWoodButton.GetComponent<CanvasGroup>();
+            addWoodCG = addWoodButton.GetComponent<CanvasGroup>();
         }
         if (serveFoodButton != null)
         {
-            serveFoodButton.onClick.AddListener(OnClickExit); // 暫時用退出當作盛菜
+            serveFoodButton.onClick.AddListener(OnClickExit); // 盛菜完後退出
         }
     }
 
@@ -120,11 +120,11 @@ public class PigFoodMiniGame : MonoBehaviour
     /// </summary>
     public void OnClickFire()
     {
-        if (!isAtStove || isCooking) return;
+        if (!isAtStove) return;
         
         isCooking = true;
-        fireLevel = 50f;  // 點火後火力先到一半
-        fuelLevel = 50f;  // 點火後燃料給一半
+        fireLevel = Mathf.Min(1.0f, fireLevel + 0.5f);
+        fuelLevel = Mathf.Min(1.0f, fuelLevel + 0.5f);
         UpdateUI();
     }
 
@@ -133,9 +133,10 @@ public class PigFoodMiniGame : MonoBehaviour
     /// </summary>
     public void OnClickAddWood()
     {
+        if (!isAtStove) return;
         Debug.Log("【豬菜小遊戲】加柴！燃料與火力補滿。");
-        fireLevel = 100f;
-        fuelLevel = 100f;
+        fireLevel = 1.0f;
+        fuelLevel = 1.0f;
         UpdateUI();
     }
 
@@ -147,11 +148,14 @@ public class PigFoodMiniGame : MonoBehaviour
         // 若非烹煮中或已完成，則不更新進度
         if (!isCooking || isDone) return;
 
-        // 更新烹煮進度
-        cookProgress += (100f / cookDuration) * Time.deltaTime;
-        cookProgress = Mathf.Min(100f, cookProgress);
+        // 更新烹煮進度，速率隨火力大小變化 (1.0 為正常速率)
+        if (fireLevel > 0)
+        {
+            cookProgress += (1.0f / cookDuration) * fireLevel * Time.deltaTime;
+            cookProgress = Mathf.Min(1.0f, cookProgress);
+        }
         
-        if (cookProgress >= 100f)
+        if (cookProgress >= 1.0f)
         {
             isDone = true;
             RefreshSections(); // 顯示盛菜按鈕
@@ -184,25 +188,34 @@ public class PigFoodMiniGame : MonoBehaviour
         }
         
         if (cookProgressBar != null)
-            cookProgressBar.value = cookProgress / 100f; // 統一使用 0-1 映射
+            cookProgressBar.value = cookProgress;
 
         if (fireBar != null)
-            fireBar.value = fireLevel / 100f;
+            fireBar.value = fireLevel;
 
         if (fuelBar != null)
-            fuelBar.value = fuelLevel / 100f;
+            fuelBar.value = fuelLevel;
 
         // 更新按鈕狀態
         SetButtonState(chopButton, chopButtonCG, chopCount < chopRequired && !isAtStove);
         SetButtonState(addToStoveButton, addToStoveButtonCG, chopCount >= chopRequired && !isAtStove);
-        SetButtonState(fireButton, fireButtonCG, isAtStove && !isCooking);
-        SetButtonState(addWoodButton, addWoodButtonCG, isAtStove);
+        
+        // 點火按鈕：在爐灶前且火力未滿時可用
+        SetButtonState(fireButton, fireButtonCG, isAtStove && fireLevel < 1.0f);
+        
+        // 加柴按鈕：在爐灶前且火力未滿時可用
+        SetButtonState(addWoodButton, addWoodCG, isAtStove && fireLevel < 1.0f);
     }
 
     private void SetButtonState(Button btn, CanvasGroup cg, bool interactable)
     {
         if (btn != null) btn.interactable = interactable;
-        if (cg != null) cg.alpha = interactable ? 1.0f : 0.5f;
+        if (cg != null)
+        {
+            cg.alpha = interactable ? 1.0f : 0.5f;
+            cg.interactable = interactable;
+            cg.blocksRaycasts = interactable;
+        }
     }
 
     /// <summary>
@@ -211,7 +224,15 @@ public class PigFoodMiniGame : MonoBehaviour
     public void OnClickExit()
     {
         if (pigFoodGame != null)
+        {
             pigFoodGame.SetActive(false);
+        }
+
+        // 通知 GameManager 關閉小遊戲並返回三合院
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ClosePigFoodGame();
+        }
     }
 
     /// <summary>
@@ -225,9 +246,8 @@ public class PigFoodMiniGame : MonoBehaviour
     public bool IsPigFoodCooking() => isCooking && !isDone;
 
     /// <summary>
-    /// Yarn 指令：開啟豬菜小遊戲視窗
+    /// 開啟豬菜小遊戲視窗
     /// </summary>
-    [YarnCommand("open_pig_food")]
     public void OpenPigFoodWindow()
     {
         if (pigFoodGame != null)

@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
     [Header("小遊戲引用")]
     public PersimmonMiniGame persimmonGame; // 在 Inspector 中拖入
     public KitchenMiniGame kitchenGame;     // 在 Inspector 中拖入
+    public PigFoodMiniGame pigFoodGame;     // 在 Inspector 中拖入
 
     private void Awake()
     {
@@ -47,6 +48,13 @@ public class GameManager : MonoBehaviour
         if (dialogueRunner == null)
         {
             dialogueRunner = FindFirstObjectByType<DialogueRunner>();
+        }
+
+        // 手動註冊指令，避免 Yarn Spinner 找不到實例目標 (needs a target)
+        if (dialogueRunner != null)
+        {
+            dialogueRunner.AddCommandHandler("open_kitchen", OpenKitchenGame);
+            dialogueRunner.AddCommandHandler("open_pig_food", OpenPigFoodGame);
         }
 
         // 初始自動啟動
@@ -81,7 +89,8 @@ public class GameManager : MonoBehaviour
         }
         else if (newLocation == LocationManager.Location.灶房)
         {
-            OpenKitchenGame();
+            Debug.Log("【GameManager】進入灶房，觸發菜單對話。");
+            StartDialogue("Scene_KitchenMenu");
         }
         else if (newLocation == LocationManager.Location.廳堂)
         {
@@ -133,6 +142,27 @@ public class GameManager : MonoBehaviour
         if (LocationManager.Instance != null)
         {
             LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
+        }
+    }
+
+    public void ClosePigFoodGame()
+    {
+        Debug.Log("【GameManager】豬菜小遊戲關閉，返回三合院。");
+        SetGameState(GameState.FreeRoam);
+
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
+        }
+    }
+
+    public void OpenPigFoodGame()
+    {
+        if (pigFoodGame != null)
+        {
+            Debug.Log("【GameManager】開啟煮豬菜小遊戲。");
+            SetGameState(GameState.Minigame);
+            pigFoodGame.OpenPigFoodWindow();
         }
     }
 

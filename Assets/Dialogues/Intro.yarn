@@ -443,3 +443,15 @@ title: Scene_06
     : <i>體力持平／財務壓力持續到明天</i>
 ===
 
+title: Scene_KitchenMenu
+---
+阿蘭: （灶房裡有幾件事要做。）
+
+-> 煮飯
+    <<open_kitchen>>
+-> 煮豬菜
+    <<open_pig_food>>
+-> 離開
+    <<go_to_location 0>>
+===
+
