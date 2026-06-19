@@ -93,7 +93,11 @@ title: Scene_Hall
 <<bg house_pm>> // 可以依據需求替換背景
 : <i>走進了廳堂。</i>
 
-<<if is_food_done()>>
+<<if has_flag("breakfast_delivered")>>
+    阿蘭: （早飯已經端過了。）
+    -> 離開
+        <<go_to_location 0>>
+<<elseif is_food_done()>>
     阿蘭: （地瓜簽粥已經煮好了。）
     -> 端飯給大家吃
         <<jump Scene_DiningHall>>
@@ -108,6 +112,10 @@ title: Scene_Hall
 
 title: Scene_DiningHall
 ---
+<<declare $is_late = false>>
+<<set $is_late = is_time_after(8, 30)>>
+<<set_flag "breakfast_delivered">>
+
 <<bg hall>>
 <<show father true>>
 <<show mother true>>
@@ -148,6 +156,8 @@ title: Scene_DiningHall
 <<adjust_stat "health" 20>>
 
 : <i>填了些東西，身子稍微有力氣了。</i>
+
+<<jump Scene_FreeRoam>>>>
 ===
 
 title: Scene_02
@@ -445,6 +455,7 @@ title: Scene_06
 
 title: Scene_FreeRoam
 ---
+<<go_to_location 0>>
 <<show father false>>
 <<show mother false>>
 <<show child false>>
@@ -593,12 +604,15 @@ title: Scene_Outside_Menu
 ---
 阿蘭: （要去哪裡咧？）
 
--> 送便當去田邊 <<if is_food_done() and not is_lunch_delivered()>>
+-> 送便當去田邊 <<if not has_flag("lunch_delivered") and is_food_done() and is_time_after(12, 0)>>
     <<jump Scene_LunchDelivery>>
--> 送便當去田邊（飯還沒煮好） <<if not is_food_done() and not is_lunch_delivered()>>
+-> 送便當去田邊（還沒到午時） <<if not has_flag("lunch_delivered") and is_food_done() and not is_time_after(12, 0)>>
+    阿蘭: （才剛早上，便當等中午再送咧。）
+    <<jump Scene_Outside_Menu>>
+-> 送便當去田邊（飯還沒煮好） <<if not has_flag("lunch_delivered") and not is_food_done()>>
     阿蘭: （便當還沒準備好，不能去田裡啊。）
     <<jump Scene_Outside_Menu>>
--> 送便當去田邊（今天已經送過了） <<if is_lunch_delivered()>>
+-> 送便當去田邊（今天已經送過了） <<if has_flag("lunch_delivered")>>
     阿蘭: （今天已經送過便當了，不用再送一次。）
     <<jump Scene_Outside_Menu>>
 -> 去洗衫窟
@@ -629,10 +643,11 @@ title: Scene_LunchDelivery
 <<dim husband>>
 <<teleport Lan 300>>
 <<light Lan>>
+<<advance_time_minutes 10>>//走過來的時間流逝
 
 : <i>田邊的風比曬場小，太陽卻更曬。她把便當遞過去。</i>
 
-<<mark_lunch_delivered>>
+<<set_flag "lunch_delivered">>
 <<dim Lan>>
 <<light husband>>
 丈夫: 來了。
@@ -654,29 +669,38 @@ title: Scene_LunchDelivery
 丈夫: 嗯。
 <<dim husband>>
 <<light Lan>>
-: <i>他低頭繼續吃。回去的路上，看到路邊有長得不錯的地瓜葉。</i>
+: <i>他低頭繼續吃。</i>
 
--> 順手摘一把地瓜葉再回去
+<<declare $leaves_picked = false>>
+<<declare $ate_lunch = false>>
+<<declare $rested = false>>
+
+<<jump LunchDelivery_Loop>>
+===
+
+title: LunchDelivery_Loop
+---
+-> 順手摘一把地瓜葉 <<if not $leaves_picked>>
     阿蘭: （空手回去是浪費，摘一點回去加菜。）
-    <<set $has_sweet_potato_leaves = true>>
+    <<set $leaves_picked = true>>
     <<advance_time_minutes 10>>
     : <i>花了點時間，摘了一把地瓜葉。</i>
-    阿蘭: （摘好了，該回去了——還是再站一下？）
-    -> 就這樣回去
-        <<go_to_location 0>>
-    -> 在田邊再站一下
-        : <i>風吹過來，稻葉輕輕響。</i>
-        阿蘭: （就一下下。）
-        <<adjust_stat "mood" 5>>
-        <<advance_time_minutes 10>>
--> 在田邊站一下再走
+    <<jump LunchDelivery_Loop>>
+-> 等丈夫吃完，把剩的吃一下 <<if not $ate_lunch>>
+    : <i>他放下碗，她才把剩下的扒完。涼了，但是飯。</i>
+    阿蘭: （吃進去就是力氣。）
+    <<set $ate_lunch = true>>
+    <<adjust_stat "health" 5>>
+    <<advance_time_minutes 15>>
+    <<jump LunchDelivery_Loop>>
+-> 在田邊站一下 <<if not $rested>>
     : <i>風吹過來，稻葉輕輕響。這裡沒有人叫她做什麼。</i>
     阿蘭: （就站一下下。）
+    <<set $rested = true>>
     <<adjust_stat "mood" 5>>
     <<advance_time_minutes 10>>
--> 直接回去
-<<go_to_location 0>>
-<<advance_time_minutes 10>>
-<<adjust_stat "health" -2>>
-<<jump Scene_FreeRoam>>
+    <<jump LunchDelivery_Loop>>
+-> 回去了
+    <<go_to_location 0>>
+    <<jump Scene_FreeRoam>>
 ===

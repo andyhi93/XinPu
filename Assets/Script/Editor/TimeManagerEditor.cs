@@ -14,6 +14,11 @@ public class TimeManagerEditor : Editor
         GUILayout.Space(10);
         
         // 加入一個按鈕
+        if (GUILayout.Button("Advance 30 Minutes", GUILayout.Height(30)))
+        {
+            TimeManager.AdvanceTimeMinutes(30f);
+        }
+
         if (GUILayout.Button("Advance 1 Hour", GUILayout.Height(30)))
         {
             timeManager.AdvanceOneHour();

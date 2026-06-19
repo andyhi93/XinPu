@@ -25,6 +25,9 @@ public class GameManager : MonoBehaviour
     public KitchenMiniGame kitchenGame;     // 在 Inspector 中拖入
     public PigFoodMiniGame pigFoodGame;     // 在 Inspector 中拖入
 
+    [Header("早餐狀態")]
+    [SerializeField] private LocationManager.Location diningHallLocation = LocationManager.Location.廳堂;
+
     private void Awake()
     {
         if (Instance == null)
@@ -77,6 +80,24 @@ public class GameManager : MonoBehaviour
         {
             LocationManager.Instance.OnLocationChanged += HandleLocationChanged;
         }
+    }
+
+    private void Update()
+    {
+        UpdateBreakfastEventDot();
+    }
+
+    /// <summary>
+    /// 早飯送出之前，廳堂熱點顯示提示圓點；過了 8:30 由黃轉紅。
+    /// 實際的顯示/變色邏輯交給 LocationManager 轉發給對應的 LocationHotspot 處理。
+    /// </summary>
+    private void UpdateBreakfastEventDot()
+    {
+        if (LocationManager.Instance == null) return;
+
+        bool shouldShow = KitchenMiniGame.IsFoodDone() && !EventManager.HasFlag("breakfast_delivered");
+        bool isCritical = TimeManager.IsTimeAfter(8, 30);
+        LocationManager.Instance.SetEventDot(diningHallLocation, shouldShow, isCritical);
     }
 
     private void OnDestroy()
@@ -273,4 +294,5 @@ public class GameManager : MonoBehaviour
             Instance.SetGameState(newState);
         }
     }
+
 }

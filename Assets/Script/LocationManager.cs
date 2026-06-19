@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Yarn.Unity;
 
@@ -22,6 +23,12 @@ public class LocationManager : MonoBehaviour
     [SerializeField] private Location currentLocation = Location.三合院;
     public Location CurrentLocation => currentLocation;
 
+    [Header("地點熱點")]
+    [Tooltip("所有地點熱點的共同父物件，啟動時會自動收集其底下的 LocationHotspot 子節點。")]
+    [SerializeField] private GameObject locationsRoot;
+
+    private readonly Dictionary<Location, LocationHotspot> hotspots = new Dictionary<Location, LocationHotspot>();
+
     [Header("設定")]
     private DialogueRunner dialogueRunner;
 
@@ -42,6 +49,41 @@ public class LocationManager : MonoBehaviour
     private void Start()
     {
         dialogueRunner = FindFirstObjectByType<DialogueRunner>();
+        BuildHotspotRegistry();
+    }
+
+    /// <summary>
+    /// 掃描 locationsRoot 底下的 LocationHotspot 子節點，依 Location 類別建立索引。
+    /// </summary>
+    private void BuildHotspotRegistry()
+    {
+        hotspots.Clear();
+        if (locationsRoot == null) return;
+
+        foreach (var hotspot in locationsRoot.GetComponentsInChildren<LocationHotspot>(true))
+        {
+            hotspots[hotspot.location] = hotspot;
+        }
+    }
+
+    /// <summary>
+    /// 取得指定地點的 LocationHotspot（若尚未註冊則回傳 null）。
+    /// </summary>
+    public LocationHotspot GetHotspot(Location loc)
+    {
+        hotspots.TryGetValue(loc, out var hotspot);
+        return hotspot;
+    }
+
+    /// <summary>
+    /// 供其他系統（如 GameManager）切換指定地點的事件提示圓點。
+    /// </summary>
+    public void SetEventDot(Location loc, bool active, bool isCritical = false)
+    {
+        if (hotspots.TryGetValue(loc, out var hotspot))
+        {
+            hotspot.SetEventDot(active, isCritical);
+        }
     }
 
     /// <summary>

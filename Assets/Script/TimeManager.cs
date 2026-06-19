@@ -67,8 +67,7 @@ public class TimeManager : MonoBehaviour
 
     private void CheckForTimeEvents()
     {
-        // 08:00 = 8 * 3600 = 28800 秒
-        if (!hasTriggeredMorningLate && currentTimeInSeconds >= 28800f)
+        if (!hasTriggeredMorningLate && IsTimeAfter(8, 0))
         {
             // 檢查飯是否煮好
             bool isFoodDone = KitchenMiniGame.IsFoodDone();
@@ -226,5 +225,16 @@ public class TimeManager : MonoBehaviour
     public float GetDayProgress()
     {
         return currentTimeInSeconds / (24f * 3600f);
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本查詢目前遊戲時間是否已經到達或超過指定的時:分。
+    /// 用法：<<if is_time_after(12, 0)>>
+    /// </summary>
+    [YarnFunction("is_time_after")]
+    public static bool IsTimeAfter(int hour, int minute)
+    {
+        if (Instance == null) return false;
+        return Instance.currentTimeInSeconds >= hour * 3600f + minute * 60f;
     }
 }

@@ -41,6 +41,26 @@ public class EventManager : MonoBehaviour
     [Header("狀態 (開發檢視用)")]
     [SerializeField] private List<string> pendingIgnoredEventIDs = new List<string>();
 
+    [Serializable]
+    public class FlagEntry
+    {
+        public string key;
+        public bool value;
+    }
+
+    [Header("旗標 (開發檢視用)")]
+    [SerializeField] private List<FlagEntry> flagsDebugView = new List<FlagEntry>();
+
+    // 固有旗標：每天都會用到的旗標，在這裡列出來才能一眼看出有哪些。
+    // 其他臨時/一次性的旗標可以直接用 <<set_flag>> 動態新增，不用列在這裡。
+    private static readonly string[] FixedFlags = new string[]
+    {
+        "breakfast_delivered",
+        "lunch_delivered",
+    };
+
+    private Dictionary<string, bool> flags = new Dictionary<string, bool>();
+
     private DialogueRunner dialogueRunner;
 
     [Serializable]
@@ -58,7 +78,21 @@ public class EventManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        ResetFixedFlags();
         LoadEventsFromJson();
+    }
+
+    /// <summary>
+    /// 將固有旗標 (FixedFlags) 重置為 false。供其他系統呼叫，例如新的一天開始時。
+    /// </summary>
+    public static void ResetFixedFlags()
+    {
+        if (Instance == null) return;
+        foreach (string key in FixedFlags)
+        {
+            Instance.flags[key] = false;
+        }
+        Instance.SyncFlagsDebugView();
     }
 
     private void LoadEventsFromJson()
@@ -297,5 +331,36 @@ public class EventManager : MonoBehaviour
         // 邏輯可自訂：例如只要有 pendingIgnoredEventIDs 就亮圓點
         // 或者檢查是否有正在 isProcessing 的事件
         return pendingIgnoredEventIDs.Count > 0;
+    }
+
+    // --- 通用旗標系統：給每日任務狀態 (早飯、送飯…) 等 bool 用 ---
+
+    /// <summary>
+    /// Yarn 指令：設定旗標。用法：<<set_flag "breakfast_delivered">>
+    /// </summary>
+    [YarnCommand("set_flag")]
+    public static void SetFlag(string key, bool value = true)
+    {
+        if (Instance == null) return;
+        Instance.flags[key] = value;
+        Instance.SyncFlagsDebugView();
+    }
+
+    private void SyncFlagsDebugView()
+    {
+        flagsDebugView.Clear();
+        foreach (var kv in flags)
+        {
+            flagsDebugView.Add(new FlagEntry { key = kv.Key, value = kv.Value });
+        }
+    }
+
+    /// <summary>
+    /// Yarn 函式：查詢旗標。用法：<<if has_flag("breakfast_delivered")>>
+    /// </summary>
+    [YarnFunction("has_flag")]
+    public static bool HasFlag(string key)
+    {
+        return Instance != null && Instance.flags.TryGetValue(key, out bool value) && value;
     }
 }
