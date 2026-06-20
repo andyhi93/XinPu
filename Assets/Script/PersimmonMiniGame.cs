@@ -10,12 +10,14 @@ public class PersimmonMiniGame : MonoBehaviour
 {
     [Header("遊戲設定")]
     [SerializeField] private int peelRequiredCount = 7;    // 需要按幾下才算削皮完成
+    [SerializeField] private int stemRequiredCount = 4;    // 需要按幾下才算去蒂完成
     [SerializeField] private int dailyTarget = 10;        // 今天的目標總顆數
 
     [Header("UI 元件")]
     [SerializeField] private GameObject gamePanel;        // 整個小遊戲的視窗面板
     [SerializeField] private Image processImage;          // 柿子狀態圖 (顯示在框內的柿子)
-    [SerializeField] private TextMeshProUGUI messageText; // 顯示進度的文字
+    [SerializeField] private TextMeshProUGUI titleText;   // 顯示標題與進度的文字
+    [SerializeField] private TextMeshProUGUI messageText; // 顯示目前該做什麼的文字
     [SerializeField] private Button peelButton;          // 削皮按鈕（半透明點擊區）
     [SerializeField] private Button stemButton;          // 去蒂按鈕
     [SerializeField] private Button nextButton;          // 下一顆按鈕
@@ -33,8 +35,11 @@ public class PersimmonMiniGame : MonoBehaviour
     // 運行時狀態變數
     private int currentPersimmonIndex = 1;
     private int peelCount = 0;
+    private int stemCount = 0;
     private bool canStem = false;
+    private bool isStemDone = false;
     private bool isWaiting = false;
+    private bool isGameComplete = false;
 
     private void Awake()
     {
@@ -56,15 +61,22 @@ public class PersimmonMiniGame : MonoBehaviour
     {
         currentPersimmonIndex = 1;
         peelCount = 0;
+        stemCount = 0;
         canStem = false;
+        isStemDone = false;
         isWaiting = false;
-        
-        if (nextButton != null) nextButton.gameObject.SetActive(false);
-        
+        isGameComplete = false;
+
+        // 下一顆按鈕一開始就顯示，但變暗無法點擊，直到去蒂完成
+        if (nextButton != null) nextButton.gameObject.SetActive(true);
+
         // 確保一開始削皮按鈕是顯示的，並給予隨機位置
         if (peelButton != null) peelButton.gameObject.SetActive(true);
-        MoveButtonToRandomPosition(); 
-        
+        MoveButtonToRandomPosition();
+
+        // 削皮完成前先隱藏去蒂按鈕
+        if (stemButton != null) stemButton.gameObject.SetActive(false);
+
         // 設定初始未剝皮的圖片
         UpdatePersimmonImage();
         UpdateUI();
@@ -109,18 +121,39 @@ public class PersimmonMiniGame : MonoBehaviour
 
     private void UpdateUI()
     {
-        if (messageText != null)
+        if (titleText != null)
         {
-            messageText.text = $"第 {currentPersimmonIndex}/{dailyTarget} 顆";
+            titleText.text = $"柿子處理 第 {currentPersimmonIndex}/{dailyTarget} 顆";
         }
 
-        bool isDone = nextButton != null && nextButton.gameObject.activeSelf;
+        if (messageText != null)
+        {
+            if (isGameComplete)
+            {
+                messageText.text = "完成今天的工作量了";
+            }
+            else if (!canStem)
+            {
+                messageText.text = "剝皮";
+            }
+            else if (!isStemDone)
+            {
+                messageText.text = "去蒂";
+            }
+            else
+            {
+                messageText.text = "換下一顆";
+            }
+        }
 
-        bool peelInteractable = !isWaiting && !canStem && !isDone;
+        bool peelInteractable = !isWaiting && !canStem && !isStemDone && !isGameComplete;
         SetButtonState(peelButton, peelInteractable);
 
-        bool stemInteractable = !isWaiting && canStem && !isDone;
+        bool stemInteractable = !isWaiting && canStem && !isStemDone && !isGameComplete;
         SetButtonState(stemButton, stemInteractable);
+
+        bool nextInteractable = !isWaiting && isStemDone && !isGameComplete;
+        SetButtonState(nextButton, nextInteractable);
     }
 
     private void SetButtonState(Button button, bool interactable)
@@ -148,9 +181,11 @@ public class PersimmonMiniGame : MonoBehaviour
 
         if (peelCount >= peelRequiredCount)
         {
-            canStem = true; 
+            canStem = true;
             // 達到規定次數，隱藏削皮按鈕
             if (peelButton != null) peelButton.gameObject.SetActive(false);
+            // 削皮完成，顯示去蒂按鈕
+            if (stemButton != null) stemButton.gameObject.SetActive(true);
         }
         else
         {
@@ -163,7 +198,7 @@ public class PersimmonMiniGame : MonoBehaviour
 
     private void OnStemClick()
     {
-        if (!isWaiting && canStem)
+        if (!isWaiting && canStem && !isStemDone)
         {
             StartCoroutine(StemRoutine());
         }
@@ -171,38 +206,57 @@ public class PersimmonMiniGame : MonoBehaviour
 
     private IEnumerator StemRoutine()
     {
-        isWaiting = true;
-        UpdateUI();
-        
-        yield return new WaitForSeconds(3.0f);
-        
-        // 替換成去蒂完成的圖片
-        if (processImage != null && stemmedSprite != null)
+        stemCount++;
+
+        if (stemCount >= stemRequiredCount)
         {
-            processImage.sprite = stemmedSprite;
+            isStemDone = true;
+
+            // 替換成去蒂完成的圖片
+            if (processImage != null && stemmedSprite != null)
+            {
+                processImage.sprite = stemmedSprite;
+            }
+
+            // 點滿次數後隱藏去蒂按鈕，並允許點擊下一顆按鈕
+            if (stemButton != null) stemButton.gameObject.SetActive(false);
         }
 
-        isWaiting = false;
-        if (nextButton != null) nextButton.gameObject.SetActive(true); 
         UpdateUI();
+        yield return null;
     }
 
     private void OnNextClick()
     {
+        if (currentPersimmonIndex >= dailyTarget)
+        {
+            isGameComplete = true;
+            if (peelButton != null) peelButton.gameObject.SetActive(false);
+            if (stemButton != null) stemButton.gameObject.SetActive(false);
+            UpdateUI();
+            return;
+        }
+
         currentPersimmonIndex++;
         peelCount = 0;
+        stemCount = 0;
         canStem = false;
+        isStemDone = false;
         isWaiting = false;
-        
-        if (nextButton != null) nextButton.gameObject.SetActive(false);
-        
+
+        // 下一顆按鈕保持顯示，僅變暗無法點擊，直到去蒂完成
+        if (nextButton != null) nextButton.gameObject.SetActive(true);
+
         // 重新顯示削皮按鈕並給予新位置
         if (peelButton != null)
         {
             peelButton.gameObject.SetActive(true);
             MoveButtonToRandomPosition();
         }
-        
+
+        // 削皮完成前先隱藏去蒂按鈕
+        if (stemButton != null) stemButton.gameObject.SetActive(false);
+
         // 重置為初始圖片
         UpdatePersimmonImage();
         UpdateUI();
@@ -218,5 +272,11 @@ public class PersimmonMiniGame : MonoBehaviour
         StopAllCoroutines();
         isWaiting = false;
         UpdateUI();
+
+        // 通知 GameManager 小遊戲已關閉，執行切換回三合院的邏輯
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ClosePersimmonGame();
+        }
     }
 }
