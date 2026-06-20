@@ -37,7 +37,7 @@ public class ResourceManager : MonoBehaviour
         { "husband", 50f }
     };
 
-    // 新增：食材庫存系統（地瓜永遠無限，不在此追蹤數量）
+    // 新增：食材庫存系統（地瓜永遠無限，不在此追蹤數量；也用來存放柴薪等一般消耗品）
     private Dictionary<string, int> ingredientStock = new Dictionary<string, int>()
     {
         { "rice", 3 },
@@ -45,7 +45,8 @@ public class ResourceManager : MonoBehaviour
         { "salt", 5 },
         { "tofu", 1 },
         { "driedFish", 1 },
-        { "eggs", 1 }
+        { "eggs", 1 },
+        { "firewood", 10 }
     };
 
     private void Awake()
@@ -273,5 +274,23 @@ public class ResourceManager : MonoBehaviour
         }
 
         ingredientStock[key] = Mathf.Max(0, ingredientStock[key] - amount);
+    }
+
+    /// <summary>
+    /// 透過 Yarn Spinner 調整物品數量（可正可負），會自動限制在 0 以上。
+    /// 用法：<<adjust_item "firewood" -1>>
+    /// </summary>
+    [YarnCommand("adjust_item")]
+    public static void AdjustItem(string itemKey, int amount)
+    {
+        if (Instance == null) return;
+
+        if (!Instance.ingredientStock.ContainsKey(itemKey))
+        {
+            Debug.LogWarning($"【ResourceManager】試圖調整不存在的食材庫存：{itemKey}");
+            return;
+        }
+
+        Instance.ingredientStock[itemKey] = Mathf.Max(0, Instance.ingredientStock[itemKey] + amount);
     }
 }

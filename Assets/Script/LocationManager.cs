@@ -50,6 +50,7 @@ public class LocationManager : MonoBehaviour
     {
         dialogueRunner = FindFirstObjectByType<DialogueRunner>();
         BuildHotspotRegistry();
+        UpdateHotspotImages(currentLocation);
     }
 
     /// <summary>
@@ -63,6 +64,18 @@ public class LocationManager : MonoBehaviour
         foreach (var hotspot in locationsRoot.GetComponentsInChildren<LocationHotspot>(true))
         {
             hotspots[hotspot.location] = hotspot;
+        }
+    }
+
+    /// <summary>
+    /// 離開三合院時關閉所有熱點的 Image，避免擋到其他畫面的點擊；回到三合院時恢復。
+    /// </summary>
+    private void UpdateHotspotImages(Location loc)
+    {
+        bool isAtHub = loc == Location.三合院;
+        foreach (var hotspot in hotspots.Values)
+        {
+            hotspot.SetHotspotImageActive(isAtHub);
         }
     }
 
@@ -121,6 +134,8 @@ public class LocationManager : MonoBehaviour
 
         currentLocation = target;
         Debug.Log($"【地點系統】玩家移動至：{currentLocation}");
+
+        UpdateHotspotImages(currentLocation);
 
         // 2. 通知地點已改變
         OnLocationChanged?.Invoke(currentLocation);

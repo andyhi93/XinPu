@@ -18,6 +18,7 @@ public class LocationHotspot : MonoBehaviour,
     [SerializeField] private Color eventDotCriticalColor = Color.red;
 
     private Image eventDotImage;
+    private Image hotspotImage; // 本熱點自身的點擊用 Image（透明，僅用於接收滑鼠事件）
 
     private void Start()
     {
@@ -26,6 +27,7 @@ public class LocationHotspot : MonoBehaviour,
         if (label != null) label.SetActive(false);
 
         if (eventDot != null) eventDotImage = eventDot.GetComponent<Image>();
+        hotspotImage = GetComponent<Image>();
     }
 
     public void OnPointerEnter(PointerEventData e)
@@ -81,6 +83,17 @@ public class LocationHotspot : MonoBehaviour,
         if (active && eventDotImage != null)
         {
             eventDotImage.color = isCritical ? eventDotCriticalColor : eventDotWarningColor;
+        }
+    }
+
+    /// <summary>
+    /// 設定本熱點的 Image 是否啟用。離開三合院時應關閉，避免擋到其他畫面的點擊。
+    /// </summary>
+    public void SetHotspotImageActive(bool active)
+    {
+        if (hotspotImage != null)
+        {
+            hotspotImage.enabled = active;
         }
     }
 }

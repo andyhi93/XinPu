@@ -279,7 +279,12 @@ public class GameManager : MonoBehaviour
 
     private void OnDialogueComplete()
     {
-        SetGameState(GameState.FreeRoam);
+        // 對話中如果有指令（例如 open_kitchen）已經把狀態切到別的模式（如 Minigame），
+        // 這裡就不該再蓋回 FreeRoam，只有「還停留在 Dialogue」時才需要自動恢復。
+        if (currentState == GameState.Dialogue)
+        {
+            SetGameState(GameState.FreeRoam);
+        }
         dialogueRunner.onDialogueComplete.RemoveListener(OnDialogueComplete);
     }
 

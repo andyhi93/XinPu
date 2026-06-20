@@ -17,6 +17,7 @@ public class PigFoodMiniGame : MonoBehaviour
     [SerializeField] private Button fireButton;
     [SerializeField] private Button addWoodButton;
     [SerializeField] private Button serveFoodButton;
+    [SerializeField] private Button stopButton; // 熄火按鈕，煮好後才能按
     [SerializeField] private Slider cookProgressBar;
     [SerializeField] private Slider fireBar;
     [SerializeField] private Slider fuelBar;
@@ -24,6 +25,8 @@ public class PigFoodMiniGame : MonoBehaviour
     [SerializeField] private GameObject pigFoodGame;
     [SerializeField] private GameObject chopSection;
     [SerializeField] private GameObject cookSection;
+    [SerializeField] private Image pigfoodFire; // 本爐火焰圖，點火時啟用
+    [SerializeField] private Image cookFire;    // 廚房爐火狀態指示，與 KitchenMiniGame 同步
 
     [Header("設定")]
     [SerializeField] private int chopRequired = 5;        // 需要剁幾下，預設 5
@@ -43,6 +46,11 @@ public class PigFoodMiniGame : MonoBehaviour
     private CanvasGroup addToStoveButtonCG;
     private CanvasGroup fireButtonCG;
     private CanvasGroup addWoodCG;
+
+    private const float FireTimerLimitSeconds = 60f * 60f; // 著火計時器上限：1 小時遊戲時間
+    private bool fireTimerActive = false;     // 著火計時器是否在跑
+    private float fireTimerStartSeconds = 0f; // 豬菜煮好當下的遊戲時間
+    private bool fireEventTriggered = false;  // 是否已經觸發過 Scene_FireEvent
 
     private void Awake()
     {
@@ -77,6 +85,10 @@ public class PigFoodMiniGame : MonoBehaviour
         if (serveFoodButton != null)
         {
             serveFoodButton.onClick.AddListener(OnClickServeFood);
+        }
+        if (stopButton != null)
+        {
+            stopButton.onClick.AddListener(OnClickStop);
         }
     }
 
@@ -125,11 +137,13 @@ public class PigFoodMiniGame : MonoBehaviour
         
         fireLevel = Mathf.Min(1.0f, fireLevel + 0.5f);
         fuelLevel = Mathf.Min(1.0f, fuelLevel + 0.5f);
-        
+
         if (fireLevel >= 1.0f)
         {
             isCooking = true;
         }
+
+        EventManager.SetFlag("pigfood_fire_lit", fireLevel > 0);
         UpdateUI();
     }
 
@@ -143,11 +157,16 @@ public class PigFoodMiniGame : MonoBehaviour
         fireLevel = 1.0f;
         fuelLevel = 1.0f;
         isCooking = true;
+
+        EventManager.SetFlag("pigfood_fire_lit", true);
         UpdateUI();
     }
 
     private void Update()
     {
+        // 不論是否還在烹煮，都要持續檢查著火計時器
+        CheckFireTimer();
+
         // 若非烹煮中或已完成，則不更新進度
         if (!isCooking || isDone) return;
 
@@ -157,14 +176,15 @@ public class PigFoodMiniGame : MonoBehaviour
             cookProgress += (1.0f / cookDuration) * fireLevel * Time.deltaTime;
             cookProgress = Mathf.Min(1.0f, cookProgress);
         }
-        
+
         bool justFinished = false;
         if (cookProgress >= 1.0f)
         {
             isDone = true;
             justFinished = true;
+            StartFireTimer();
         }
-        
+
         // 視窗開啟時才更新 UI 表現
         if (pigFoodGame != null && pigFoodGame.activeSelf)
         {
@@ -219,6 +239,25 @@ public class PigFoodMiniGame : MonoBehaviour
         
         // 加柴按鈕：在爐灶前且火力未滿時可用
         SetButtonState(addWoodButton, addWoodCG, isAtStove && fireLevel < 1.0f);
+
+        // 本爐火焰圖：有火力時顯示
+        if (pigfoodFire != null)
+        {
+            pigfoodFire.gameObject.SetActive(fireLevel > 0);
+        }
+
+        // 廚房爐火狀態指示：跟 KitchenMiniGame 的旗標同步
+        if (cookFire != null)
+        {
+            cookFire.gameObject.SetActive(EventManager.HasFlag("kitchen_fire_lit"));
+        }
+
+        // 熄火按鈕：煮好之前不能按，直接隱藏
+        if (stopButton != null)
+        {
+            stopButton.interactable = isDone;
+            stopButton.gameObject.SetActive(isDone);
+        }
     }
 
     private void SetButtonState(Button btn, CanvasGroup cg, bool interactable)
@@ -243,6 +282,89 @@ public class PigFoodMiniGame : MonoBehaviour
             RefreshSections();
             OnClickExit(); // 盛出後自動關閉視窗
         }
+    }
+
+    /// <summary>
+    /// 豬菜煮好的瞬間啟動著火計時器（使用遊戲時間），並亮起灶房 EventDot（黃色警示）
+    /// </summary>
+    private void StartFireTimer()
+    {
+        fireTimerActive = true;
+        fireEventTriggered = false;
+        fireTimerStartSeconds = TimeManager.Instance != null ? TimeManager.Instance.CurrentTimeInSeconds : 0f;
+
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, true, false);
+        }
+    }
+
+    /// <summary>
+    /// 每幀檢查著火計時器：超過時限就轉紅並觸發 Scene_FireEvent；
+    /// 若火災已經透過劇情解決（fire_extinguished 旗標），就自動清除計時器
+    /// </summary>
+    private void CheckFireTimer()
+    {
+        if (!fireTimerActive) return;
+
+        if (fireEventTriggered && EventManager.HasFlag("fire_extinguished"))
+        {
+            ExtinguishFire();
+            return;
+        }
+
+        if (fireEventTriggered || TimeManager.Instance == null) return;
+
+        float elapsed = TimeManager.Instance.CurrentTimeInSeconds - fireTimerStartSeconds;
+        if (elapsed < 0) elapsed += 24f * 3600f; // 處理跨日情況
+
+        if (elapsed >= FireTimerLimitSeconds)
+        {
+            fireEventTriggered = true;
+
+            if (LocationManager.Instance != null)
+            {
+                LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, true, true);
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ForceStartDialogue("Scene_FireEvent");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 熄火：清除本爐的著火狀態、計時器與灶房 EventDot
+    /// </summary>
+    private void ExtinguishFire()
+    {
+        // 注意：isCooking／isDone 不重置，代表「烹煮流程已開始/已完成」，與 messageText 顯示邏輯一致
+        fireLevel = 0f;
+        fuelLevel = 0f;
+
+        fireTimerActive = false;
+        fireEventTriggered = false;
+
+        EventManager.SetFlag("pigfood_fire_lit", false);
+
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, false, false);
+        }
+
+        UpdateUI();
+    }
+
+    /// <summary>
+    /// 熄火按鈕點擊事件，煮好後才能按
+    /// </summary>
+    public void OnClickStop()
+    {
+        if (!isDone) return;
+
+        ExtinguishFire();
+        EventManager.SetFlag("fire_extinguished", true);
     }
 
     /// <summary>

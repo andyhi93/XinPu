@@ -472,12 +472,29 @@ title: Scene_KitchenMenu
 ---
 阿蘭: （灶房裡有幾件事要做。）
 
--> 煮飯
-    <<open_kitchen>>
--> 煮豬菜
-    <<open_pig_food>>
--> 離開
-    <<go_to_location 0>>
+<<if is_kitchen_unfinished()>>
+    -> 煮飯（好像有事情還沒做）
+        <<open_kitchen>>
+    -> 煮豬菜
+        <<open_pig_food>>
+    -> 離開
+        <<go_to_location 0>>
+<<elseif is_kitchen_done_for_now() and not is_time_after(17, 0)>>
+    -> 煮飯（今天煮過早飯了，晚上再來）
+        阿蘭: （今天早上的飯已經煮過了，晚上再來煮晚飯吧。）
+        <<go_to_location 0>>
+    -> 煮豬菜
+        <<open_pig_food>>
+    -> 離開
+        <<go_to_location 0>>
+<<else>>
+    -> 煮飯
+        <<open_kitchen>>
+    -> 煮豬菜
+        <<open_pig_food>>
+    -> 離開
+        <<go_to_location 0>>
+<<endif>>
 ===
 
 title: Scene_PigPen
@@ -703,4 +720,83 @@ title: LunchDelivery_Loop
 -> 回去了
     <<go_to_location 0>>
     <<jump Scene_FreeRoam>>
+===
+
+title: Scene_FireEvent
+---
+<<bg kitchen>>
+<<show mother false>>
+<<show husband false>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>灶房裡傳來焦味。她走進去——火苗已經竄上來了。</i>
+阿蘭: 不好！
+
+<<set $dice1 = random_range(1, 6)>>
+<<set $dice2 = random_range(1, 6)>>
+<<set $dice_total = $dice1 + $dice2>>
+
+: <i>她抓起旁邊的濕布，拼命往火上壓——</i>
+: <i>擲骰：{$dice1} + {$dice2} = {$dice_total}</i>
+
+<<if $dice_total >= 8>>
+    <<jump FireEvent_Good>>
+<<elseif $dice_total >= 5>>
+    <<jump FireEvent_Mid>>
+<<else>>
+    <<jump FireEvent_Bad>>
+<<endif>>
+===
+
+title: FireEvent_Good
+---
+: <i>火壓住了。焦味散不去，但沒有燒出去。</i>
+阿蘭: （好險。再晚一步就不得了了。）
+阿蘭: （手在抖——但沒事了。）
+<<adjust_stat "health" -10>>
+<<adjust_item "firewood" -1>>
+: <i>體力 -10／柴薪 -1</i>
+<<set_flag "fire_extinguished">>
+<<jump Scene_FreeRoam>>
+===
+
+title: FireEvent_Mid
+---
+: <i>火壓住了，但飯已經燒焦了一半。鍋底是黑的。</i>
+阿蘭: （這鍋沒辦法上桌了。）
+<<adjust_stat "health" -15>>
+<<adjust_stat "mood" -10>>
+<<adjust_item "firewood" -2>>
+<<set_flag "food_burnt">>
+: <i>體力 -15／心情 -10／柴薪 -2</i>
+: <i>今天的飯報廢，需要重煮或全家沒飯吃。</i>
+<<set_flag "fire_extinguished">>
+<<jump Scene_FreeRoam>>
+===
+
+title: FireEvent_Bad
+---
+: <i>火壓不住。她大叫，鄰居聽見跑過來幫忙，才把火撲滅。</i>
+阿蘭: （臉上烤得發燙，手也燙傷了一點。）
+: <i>丈夫從外面衝進來，看著燒黑的灶台。</i>
+<<show husband true>>
+<<teleport husband -300>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 怎麼顧灶的？
+<<dim husband>>
+<<light Lan>>
+阿蘭: （這話我沒辦法回。）
+<<adjust_stat "health" -25>>
+<<adjust_stat "mood" -20>>
+<<adjust_favorability "husband" -10>>
+<<adjust_favorability "grandmother" -15>>
+<<adjust_item "firewood" -3>>
+<<set_flag "food_burnt">>
+: <i>體力 -25／心情 -20／丈夫好感 -10／婆婆好感 -15／柴薪 -3</i>
+: <i>今天的飯報廢，鄰里都知道這件事了。</i>
+<<set_flag "fire_extinguished">>
+<<show husband false>>
+<<jump Scene_FreeRoam>>
 ===

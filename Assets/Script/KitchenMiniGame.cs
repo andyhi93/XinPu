@@ -24,7 +24,10 @@ public class KitchenMiniGame : MonoBehaviour
     [SerializeField] private Button lightFireButton;  // 點火按鈕
     [SerializeField] private Button addWoodButton;    // 加柴按鈕
     [SerializeField] private Button serveFoodButton;  // 盛飯按鈕
+    [SerializeField] private Button stopButton;        // 熄火按鈕，煮好後才能按
     [SerializeField] private GameObject kitchenGame;  // 整個小遊戲視窗物件
+    [SerializeField] private Image cookFire;          // 本爐火焰圖，點火時啟用
+    [SerializeField] private Image pigfoodFire;        // 豬菜爐火狀態指示，與 PigFoodMiniGame 同步
 
     [Header("可調參數")]
     [SerializeField] private float cookTotalSeconds = 120f;     // 完整煮熟需要的秒數
@@ -45,9 +48,16 @@ public class KitchenMiniGame : MonoBehaviour
     [SerializeField] private float fuelLevel = 0;      // 當前燃料值
     [SerializeField] private float cookProgress = 0;   // 當前烹煮進度
     [SerializeField] private bool isAddingFire = false; // 是否正在執行加柴動畫（防止連點）
+    [SerializeField] private bool hasServed = false;     // 是否已經盛飯
+    [SerializeField] private bool hasStoppedFire = false; // 這一輪是否已經按過熄火
 
     private CanvasGroup lightFireCG; // 點火按鈕的透明度控制
     private CanvasGroup addWoodCG;   // 加柴按鈕的透明度控制
+
+    private const float FireTimerLimitSeconds = 60f * 60f; // 著火計時器上限：1 小時遊戲時間
+    private bool fireTimerActive = false;     // 著火計時器是否在跑
+    private float fireTimerStartSeconds = 0f; // 飯煮好當下的遊戲時間
+    private bool fireEventTriggered = false;  // 是否已經觸發過 Scene_FireEvent
 
     private void Awake()
     {
@@ -74,6 +84,11 @@ public class KitchenMiniGame : MonoBehaviour
         {
             serveFoodButton.onClick.AddListener(OnClickServeFood);
         }
+        // 綁定熄火按鈕事件
+        if (stopButton != null)
+        {
+            stopButton.onClick.AddListener(OnClickStop);
+        }
     }
 
     private void Update()
@@ -87,6 +102,7 @@ public class KitchenMiniGame : MonoBehaviour
 
         // 不論視窗是否開啟，邏輯（火力、燃料、進度）都持續更新
         UpdateGameLogic();
+        CheckFireTimer();
 
         // 只有視窗開啟時，才更新 UI 表現以節省效能
         if (kitchenGame != null && kitchenGame.activeSelf)
@@ -126,6 +142,7 @@ public class KitchenMiniGame : MonoBehaviour
         if (fireLevel <= 0)
         {
             state = KitchenState.Extinguished;
+            EventManager.SetFlag("kitchen_fire_lit", false);
             return; // 熄火後不繼續計算進度
         }
 
@@ -157,6 +174,7 @@ public class KitchenMiniGame : MonoBehaviour
                 {
                     cookProgress = 100f;
                     state = KitchenState.Done;
+                    StartFireTimer();
                 }
                 break;
         }
@@ -170,6 +188,26 @@ public class KitchenMiniGame : MonoBehaviour
     {
         if (Instance == null) return false;
         return Instance.state == KitchenState.Done;
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本檢查：飯已經煮好，但火還沒關，或還沒盛飯（這一輪還有事情沒做完）
+    /// </summary>
+    [YarnFunction("is_kitchen_unfinished")]
+    public static bool IsKitchenUnfinished()
+    {
+        if (Instance == null) return false;
+        return Instance.state == KitchenState.Done || (Instance.hasStoppedFire && !Instance.hasServed);
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本檢查：這一輪飯已經盛好、火也關了（流程已完整跑完一次）
+    /// </summary>
+    [YarnFunction("is_kitchen_done_for_now")]
+    public static bool IsKitchenDoneForNow()
+    {
+        if (Instance == null) return false;
+        return Instance.hasStoppedFire && Instance.hasServed;
     }
 
     /// <summary>
@@ -198,23 +236,47 @@ public class KitchenMiniGame : MonoBehaviour
                 case KitchenState.Unlit: statusText.text = "待點火"; break;
                 case KitchenState.Warming: statusText.text = "暖火中"; break;
                 case KitchenState.Cooking: statusText.text = "烹煮中"; break;
-                case KitchenState.Extinguished: statusText.text = "火熄了，重新點火"; break;
+                case KitchenState.Extinguished:
+                    statusText.text = (hasStoppedFire && hasServed)
+                        ? "今天早上的飯已經煮過了，晚上再來煮晚飯吧。"
+                        : "火熄了，重新點火";
+                    break;
                 case KitchenState.Done: statusText.text = "煮好了"; break;
             }
         }
 
-        // 更新點火按鈕可用性（僅在未點火或已熄滅時可用）
-        bool lightFireInteractable = (state == KitchenState.Unlit || state == KitchenState.Extinguished);
+        // 更新點火按鈕可用性（僅在未點火或已熄滅時可用；這一輪已經盛飯+熄火就不能再點）
+        bool lightFireInteractable = (state == KitchenState.Unlit || state == KitchenState.Extinguished) && !(hasStoppedFire && hasServed);
         SetButtonState(lightFireButton, lightFireCG, lightFireInteractable);
 
         // 更新加柴按鈕可用性（在暖火或烹煮中，且動畫未執行時可用）
         bool addWoodInteractable = (state == KitchenState.Warming || state == KitchenState.Cooking) && !isAddingFire;
         SetButtonState(addWoodButton, addWoodCG, addWoodInteractable);
 
-        // 更新盛飯按鈕顯示狀態
+        // 更新盛飯按鈕顯示狀態：煮好且尚未盛過才顯示
         if (serveFoodButton != null)
         {
-            serveFoodButton.gameObject.SetActive(state == KitchenState.Done);
+            serveFoodButton.gameObject.SetActive(state == KitchenState.Done && !hasServed);
+        }
+
+        // 本爐火焰圖：有火（暖火/烹煮/已完成）時顯示
+        if (cookFire != null)
+        {
+            cookFire.gameObject.SetActive(state == KitchenState.Warming || state == KitchenState.Cooking || state == KitchenState.Done);
+        }
+
+        // 豬菜爐火狀態指示：跟 PigFoodMiniGame 的旗標同步
+        if (pigfoodFire != null)
+        {
+            pigfoodFire.gameObject.SetActive(EventManager.HasFlag("pigfood_fire_lit"));
+        }
+
+        // 熄火按鈕：煮好之前不能按，直接隱藏
+        if (stopButton != null)
+        {
+            bool canStop = state == KitchenState.Done;
+            stopButton.interactable = canStop;
+            stopButton.gameObject.SetActive(canStop);
         }
     }
 
@@ -232,15 +294,22 @@ public class KitchenMiniGame : MonoBehaviour
     /// </summary>
     public void OnClickLightFire()
     {
+        if (hasStoppedFire && hasServed) return; // 這一輪已經盛飯+熄火，先不能重新點火
+
         if (state == KitchenState.Unlit || state == KitchenState.Extinguished)
         {
             state = KitchenState.Warming;
             fuelLevel = 40f; // 點火後預設給予 40 燃料
-            
+
             // 先給予基礎火力，避免 Update 立即判定小於 16 而熄滅
-            fireLevel = 20f; 
+            fireLevel = 20f;
+
+            // 開始新一輪煮飯，重置上一輪的盛飯／熄火紀錄
+            hasServed = false;
+            hasStoppedFire = false;
 
             StartCoroutine(RaiseFireCoroutine(20f)); // 觸發火力進一步上升
+            EventManager.SetFlag("kitchen_fire_lit", true);
             UpdateUI();
         }
     }
@@ -314,6 +383,8 @@ public class KitchenMiniGame : MonoBehaviour
     /// </summary>
     public void OnClickServeFood()
     {
+        hasServed = true;
+
         if (kitchenGame != null)
         {
             kitchenGame.SetActive(false);
@@ -325,6 +396,91 @@ public class KitchenMiniGame : MonoBehaviour
             GameManager.Instance.CloseKitchenGame(); // 先回到 FreeRoam 並切換地點
             GameManager.Instance.StartDialogue("Scene_ServeFood"); // 接著啟動對話進入 Dialogue 模式
         }
+    }
+
+    /// <summary>
+    /// 飯煮好的瞬間啟動著火計時器（使用遊戲時間），並亮起灶房 EventDot（黃色警示）
+    /// </summary>
+    private void StartFireTimer()
+    {
+        fireTimerActive = true;
+        fireEventTriggered = false;
+        fireTimerStartSeconds = TimeManager.Instance != null ? TimeManager.Instance.CurrentTimeInSeconds : 0f;
+
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, true, false);
+        }
+    }
+
+    /// <summary>
+    /// 每幀檢查著火計時器：超過時限就轉紅並觸發 Scene_FireEvent；
+    /// 若火災已經透過劇情解決（fire_extinguished 旗標），就自動清除計時器
+    /// </summary>
+    private void CheckFireTimer()
+    {
+        if (!fireTimerActive) return;
+
+        if (fireEventTriggered && EventManager.HasFlag("fire_extinguished"))
+        {
+            ExtinguishFire();
+            return;
+        }
+
+        if (fireEventTriggered || TimeManager.Instance == null) return;
+
+        float elapsed = TimeManager.Instance.CurrentTimeInSeconds - fireTimerStartSeconds;
+        if (elapsed < 0) elapsed += 24f * 3600f; // 處理跨日情況
+
+        if (elapsed >= FireTimerLimitSeconds)
+        {
+            fireEventTriggered = true;
+
+            if (LocationManager.Instance != null)
+            {
+                LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, true, true);
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ForceStartDialogue("Scene_FireEvent");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 熄火：清除本爐的著火狀態、計時器與灶房 EventDot
+    /// </summary>
+    private void ExtinguishFire()
+    {
+        state = KitchenState.Extinguished;
+        fireLevel = 0f;
+        fuelLevel = 0f;
+        cookProgress = 0f; // 避免重新點火後因殘留進度立即又判定為煮好
+        hasStoppedFire = true; // 這一輪已經熄火，hasServed 留到下次點火才重置
+
+        fireTimerActive = false;
+        fireEventTriggered = false;
+
+        EventManager.SetFlag("kitchen_fire_lit", false);
+
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, false, false);
+        }
+
+        UpdateUI();
+    }
+
+    /// <summary>
+    /// 熄火按鈕點擊事件，煮好後才能按
+    /// </summary>
+    public void OnClickStop()
+    {
+        if (state != KitchenState.Done) return;
+
+        ExtinguishFire();
+        EventManager.SetFlag("fire_extinguished", true);
     }
 
     /// <summary>
