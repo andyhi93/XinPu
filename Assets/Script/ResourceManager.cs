@@ -5,7 +5,7 @@ using Yarn.Unity;
 
 public class ResourceManager : MonoBehaviour
 {
-    public static ResourceManager Instance { get; private set; }
+    public static ResourceManager        Instance { get; private set; }
 
     public enum FavorLevel { 差, 普通, 好 }
 
@@ -35,6 +35,17 @@ public class ResourceManager : MonoBehaviour
         { "grandfather", 50f },
         { "grandmother", 50f },
         { "husband", 50f }
+    };
+
+    // 新增：食材庫存系統（地瓜永遠無限，不在此追蹤數量）
+    private Dictionary<string, int> ingredientStock = new Dictionary<string, int>()
+    {
+        { "rice", 3 },
+        { "oil", 5 },
+        { "salt", 5 },
+        { "tofu", 1 },
+        { "driedFish", 1 },
+        { "eggs", 1 }
     };
 
     private void Awake()
@@ -232,5 +243,35 @@ public class ResourceManager : MonoBehaviour
     {
         // 回傳一個新的 Dictionary 避免外部直接修改內部資料
         return new Dictionary<string, float>(npcFavorability);
+    }
+
+    // --- 新增：食材庫存系統方法 ---
+
+    /// <summary>
+    /// 取得指定食材目前的庫存數量
+    /// </summary>
+    public int GetIngredientCount(string key)
+    {
+        if (ingredientStock.TryGetValue(key, out int amount))
+        {
+            return amount;
+        }
+
+        Debug.LogWarning($"【ResourceManager】試圖取得不存在的食材庫存：{key}");
+        return 0;
+    }
+
+    /// <summary>
+    /// 消耗指定數量的食材，會自動限制在 0 以上
+    /// </summary>
+    public void ConsumeIngredient(string key, int amount)
+    {
+        if (!ingredientStock.ContainsKey(key))
+        {
+            Debug.LogWarning($"【ResourceManager】試圖消耗不存在的食材庫存：{key}");
+            return;
+        }
+
+        ingredientStock[key] = Mathf.Max(0, ingredientStock[key] - amount);
     }
 }

@@ -23,10 +23,14 @@ public class GameManager : MonoBehaviour
     [Header("小遊戲引用")]
     public PersimmonMiniGame persimmonGame; // 在 Inspector 中拖入
     public KitchenMiniGame kitchenGame;     // 在 Inspector 中拖入
+    public KitchenMenu kitchenMenu;         // 在 Inspector 中拖入
     public PigFoodMiniGame pigFoodGame;     // 在 Inspector 中拖入
 
     [Header("早餐狀態")]
     [SerializeField] private LocationManager.Location diningHallLocation = LocationManager.Location.廳堂;
+
+    // 是否已經在 KitchenMenu 選好這一餐的食材，選好之前進灶房都先開選單
+    private bool kitchenIngredientsSelected = false;
 
     private void Awake()
     {
@@ -166,10 +170,33 @@ public class GameManager : MonoBehaviour
 
     public void OpenKitchenGame()
     {
+        if (!kitchenIngredientsSelected)
+        {
+            if (kitchenMenu == null) return;
+
+            Debug.Log("【GameManager】進入灶房，尚未選擇食材，開啟煮飯選單。");
+            SetGameState(GameState.Minigame);
+            kitchenMenu.OpenMenu();
+        }
+        else
+        {
+            if (kitchenGame == null) return;
+
+            Debug.Log("【GameManager】進入灶房，食材已選好，開啟廚房小遊戲。");
+            SetGameState(GameState.Minigame);
+            kitchenGame.OpenGame();
+        }
+    }
+
+    /// <summary>
+    /// 由 KitchenMenu 的煮飯按鈕呼叫：食材已選好，切換到廚房煮飯小遊戲。
+    /// </summary>
+    public void ConfirmKitchenIngredients()
+    {
+        kitchenIngredientsSelected = true;
+
         if (kitchenGame != null)
         {
-            Debug.Log("【GameManager】進入灶房，自動開啟廚房小遊戲。");
-            SetGameState(GameState.Minigame);
             kitchenGame.OpenGame();
         }
     }

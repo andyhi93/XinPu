@@ -363,4 +363,26 @@ public class EventManager : MonoBehaviour
     {
         return Instance != null && Instance.flags.TryGetValue(key, out bool value) && value;
     }
+
+    // --- 供 KitchenMenu 呼叫：記錄煮飯的食材選擇與好感度結果 ---
+
+    // 丈夫在田裡吃便當，早飯對他的好感度影響只有一半
+    private const float HusbandFavorabilityMultiplier = 0.5f;
+
+    /// <summary>
+    /// 記錄一次煮飯的加菜選擇與計算出的好感度效果，並套用到公公、婆婆、丈夫的好感度。
+    /// 由 KitchenMenu 的煮飯按鈕呼叫。
+    /// </summary>
+    public void RecordKitchenMealChoice(string addItemKey, int favorabilityResult)
+    {
+        string addItemLabel = string.IsNullOrEmpty(addItemKey) ? "無加菜" : addItemKey;
+        Debug.Log($"【事件系統】煮飯選擇：{addItemLabel}，好感度效果：{favorabilityResult}");
+
+        if (ResourceManager.Instance != null)
+        {
+            ResourceManager.Instance.ModifyFavorability("grandfather", favorabilityResult);
+            ResourceManager.Instance.ModifyFavorability("grandmother", favorabilityResult);
+            ResourceManager.Instance.ModifyFavorability("husband", favorabilityResult * HusbandFavorabilityMultiplier);
+        }
+    }
 }
