@@ -10,7 +10,7 @@ public class TimeManager : MonoBehaviour
     [Header("時間設定")]
     [Tooltip("現實世界多少分鐘代表遊戲中的 24 小時。")]
     [SerializeField] private float dayLengthInMinutes = 9f;
-    
+
     [Header("狀態")]
     public bool isGamePaused = false;
 
@@ -31,6 +31,10 @@ public class TimeManager : MonoBehaviour
         "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"
     };
 
+    [Header("地支轉盤")]
+    [SerializeField] private RectTransform branchDialImage; // 顯示地支的圓形 Image，會依時辰旋轉
+    [SerializeField] private bool clockwiseRotation = true; // 旋轉方向，跟美術圖對不上就取消勾選
+
     // 事件：當時段（時辰）改變時觸發
     public event Action<string> OnTimePeriodChanged;
 
@@ -43,7 +47,7 @@ public class TimeManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 初始化遊戲開始時間
         currentTimeInSeconds = 0f;
         UpdateBranchIndex(forceNotify: true);
@@ -56,7 +60,7 @@ public class TimeManager : MonoBehaviour
         // 計算每秒現實時間對應多少遊戲秒數
         // 24 小時 * 3600 秒 / (dayLengthInMinutes * 60 秒)
         float gameSecondsPerRealSecond = (24f * 3600f) / (dayLengthInMinutes * 60f);
-        
+
         currentTimeInSeconds += Time.deltaTime * gameSecondsPerRealSecond;
 
         // 滿 24 小時重置
@@ -157,7 +161,7 @@ public class TimeManager : MonoBehaviour
     private void UpdateBranchIndex(bool forceNotify = false)
     {
         float currentHour = currentTimeInSeconds / 3600f;
-        
+
         // 地支計算邏輯：
         // 子時是 23:00 - 01:00
         // 丑時是 01:00 - 03:00，以此類推
@@ -176,9 +180,32 @@ public class TimeManager : MonoBehaviour
             }
 
             currentBranchIndex = newIndex;
+            UpdateBranchDialRotation();
             OnTimePeriodChanged?.Invoke(GetCurrentTime());
             Debug.Log($"時段已切換：{GetCurrentTime()}時");
         }
+    }
+
+    /// <summary>
+    /// 地支索引轉換成起始小時（子(0)->23, 丑(1)->1, 寅(2)->3, 卯(3)->5...）
+    /// </summary>
+    private static int BranchIndexToStartHour(int branchIndex)
+    {
+        return (branchIndex * 2 - 1 + 24) % 24;
+    }
+
+    /// <summary>
+    /// 依目前地支旋轉圓形圖。只在地支切換的瞬間呼叫，不需要每幀更新。
+    /// rotation = 該地支起始小時 × 30 度（12 小時對應 360 度）。
+    /// </summary>
+    private void UpdateBranchDialRotation()
+    {
+        if (branchDialImage == null) return;
+
+        float angle = BranchIndexToStartHour(currentBranchIndex) * 30f;
+        if (clockwiseRotation) angle = -angle;
+
+        branchDialImage.localEulerAngles = new Vector3(0f, 0f, angle);
     }
 
     /// <summary>
@@ -188,7 +215,7 @@ public class TimeManager : MonoBehaviour
     {
         if (currentBranchIndex < 0 || currentBranchIndex >= earthlyBranches.Length)
             return "未知";
-            
+
         return earthlyBranches[currentBranchIndex];
     }
 
@@ -204,7 +231,7 @@ public class TimeManager : MonoBehaviour
     {
         isGamePaused = false;
     }
-    
+
     [ContextMenu("Advance 1 Hour")]
     public void AdvanceOneHour()
     {
@@ -269,12 +296,11 @@ public class TimeManager : MonoBehaviour
             // 嘗試解析為時辰
             string branchStr = timeInput.Replace("時", "").Trim();
             int branchIndex = Array.IndexOf(Instance.earthlyBranches, branchStr);
-            
+
             if (branchIndex != -1)
             {
                 // 計算該時辰的起始小時
-                // 子(0) -> 23, 丑(1) -> 1, 寅(2) -> 3, 卯(3) -> 5
-                int startHour = (branchIndex * 2 - 1 + 24) % 24;
+                int startHour = BranchIndexToStartHour(branchIndex);
                 Instance.currentTimeInSeconds = startHour * 3600f;
                 Debug.Log($"【TimeManager】時間已設定為 {branchStr}時 ({startHour}:00)");
             }
@@ -287,7 +313,7 @@ public class TimeManager : MonoBehaviour
 
         Instance.UpdateBranchIndex(forceNotify: true);
     }
-    
+
     /// <summary>
     /// 回傳當前一天的進度 (0.0 到 1.0)
     /// </summary>
