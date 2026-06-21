@@ -157,7 +157,7 @@ title: Scene_DiningHall
 
 : <i>填了些東西，身子稍微有力氣了。</i>
 
-<<jump Scene_FreeRoam>>>>
+<<jump Scene_FreeRoam>>
 ===
 
 title: Scene_02
@@ -477,6 +477,12 @@ title: Scene_KitchenMenu
         <<open_kitchen>>
     -> 煮豬菜
         <<open_pig_food>>
+    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+        <<jump Scene_BoilWater>>
+    -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+        阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
+    -> 挑水 <<if get_item("water") <= 1>>
+        <<jump Scene_FetchWater>>
     -> 離開
         <<go_to_location 0>>
 <<elseif is_kitchen_done_for_now() and not is_time_after(17, 0)>>
@@ -485,6 +491,12 @@ title: Scene_KitchenMenu
         <<go_to_location 0>>
     -> 煮豬菜
         <<open_pig_food>>
+    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+        <<jump Scene_BoilWater>>
+    -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+        阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
+    -> 挑水 <<if get_item("water") <= 1>>
+        <<jump Scene_FetchWater>>
     -> 離開
         <<go_to_location 0>>
 <<else>>
@@ -492,9 +504,85 @@ title: Scene_KitchenMenu
         <<open_kitchen>>
     -> 煮豬菜
         <<open_pig_food>>
+    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+        <<jump Scene_BoilWater>>
+    -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+        阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
+    -> 挑水 <<if get_item("water") <= 1>>
+        <<jump Scene_FetchWater>>
     -> 離開
         <<go_to_location 0>>
 <<endif>>
+===
+
+title: Scene_FetchWater
+---
+<<bg kitchen>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>井在院子角落，扁擔掛在牆上。</i>
+阿蘭: （挑水這件事，日日都少不了。）
+: <i>她把兩個木桶掛上扁擔，走到井邊，一桶一桶打上來。</i>
+: <i>水桶沉，走回灶房這段路，腰是彎的。</i>
+阿蘭: （挑了這麼多年，還是重。）
+
+<<adjust_stat "health" -10>>
+<<adjust_item "water" 2>>
+<<advance_time_minutes 30>>
+
+: <i>體力 -10／水 +2／消耗半小時</i>
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_BoilWater
+---
+<<bg kitchen>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>飯煮完了，灶還有餘溫。她看著水桶，想著要不要把水燒起來。</i>
+阿蘭: （燒水要花 2 份柴薪，還要花半小時，確定要燒嗎？）
+
+-> 燒，提去給阿公他們洗
+    : <i>她把大鍋架上去，把水倒進去燒。</i>
+    阿蘭: （燒熱了，提去給阿公他們洗。剩下的才輪到我。）
+    : <i>火慢慢把水逼熱，蒸氣從鍋蓋邊緣冒出來。</i>
+
+    <<adjust_item "water" -1>>
+    <<adjust_item "firewood" -2>>
+    <<advance_time_minutes 30>>
+    <<set_flag "water_boiled_today">>
+    <<adjust_favorability "grandfather" 3>>
+    <<adjust_favorability "grandmother" 3>>
+    <<adjust_favorability "husband" 3>>
+
+    : <i>柴薪 -2／水 -1／消耗半小時／全家好感度 +3</i>
+    阿蘭: （水燒好了。她最後洗，這時候水已經不太熱了。）
+    阿蘭: （涼一點也是洗了。）
+    <<jump Scene_FreeRoam>>
+-> 先不要，柴薪還是要省
+    阿蘭: （再等等好了。）
+    <<jump Scene_FreeRoam>>
+===
+
+title: Scene_NoWaterWarning
+---
+<<bg house_am>>
+<<show mother true>>
+<<teleport mother -300>>
+<<dim Lan>>
+<<light mother>>
+
+婆婆: 這幾天也不燒水，家裡的人都是豬嗎？
+: <i>她沒有等阿蘭回答，轉身走了。</i>
+
+<<dim mother>>
+<<light Lan>>
+阿蘭: （我知道咧——只是柴不夠、水不夠、人也不夠。）
+<<adjust_favorability "grandmother" -8>>
+<<show mother false>>
+<<jump Scene_FreeRoam>>
 ===
 
 title: Scene_PigPen
@@ -613,20 +701,21 @@ title: Scene_MorningLate_Hall
 阿蘭: （夠了。能走路就夠了。）
 
 <<adjust_stat "health" 10>>
+<<set_flag "breakfast_delivered">>
 <<show mother false>>
-<<game_mode "FreeRoam">>
+<<jump Scene_FreeRoam>>
 ===
 
 title: Scene_Outside_Menu
 ---
 阿蘭: （要去哪裡咧？）
 
--> 送便當去田邊 <<if not has_flag("lunch_delivered") and is_food_done() and is_time_after(12, 0)>>
+-> 送便當去田邊 <<if not has_flag("lunch_delivered") and has_flag("breakfast_delivered") and is_time_after(12, 0)>>
     <<jump Scene_LunchDelivery>>
--> 送便當去田邊（還沒到午時） <<if not has_flag("lunch_delivered") and is_food_done() and not is_time_after(12, 0)>>
+-> 送便當去田邊（還沒到午時） <<if not has_flag("lunch_delivered") and has_flag("breakfast_delivered") and not is_time_after(12, 0)>>
     阿蘭: （才剛早上，便當等中午再送咧。）
     <<jump Scene_Outside_Menu>>
--> 送便當去田邊（飯還沒煮好） <<if not has_flag("lunch_delivered") and not is_food_done()>>
+-> 送便當去田邊（飯還沒煮好） <<if not has_flag("lunch_delivered") and not has_flag("breakfast_delivered")>>
     阿蘭: （便當還沒準備好，不能去田裡啊。）
     <<jump Scene_Outside_Menu>>
 -> 送便當去田邊（今天已經送過了） <<if has_flag("lunch_delivered")>>
@@ -798,5 +887,78 @@ title: FireEvent_Bad
 : <i>今天的飯報廢，鄰里都知道這件事了。</i>
 <<set_flag "fire_extinguished">>
 <<show husband false>>
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_DinnerLate
+---
+<<bg kitchen>>
+<<show mother true>>
+<<teleport mother -300>>
+<<teleport Lan 300>>
+<<light mother>>
+<<dim Lan>>
+
+: <i>婆婆走進灶房。鍋是冷的。</i>
+
+婆婆: 這個時辰了，飯還沒影？
+: <i>她沒有等阿蘭回答，已經自己蹲下去點火了。</i>
+婆婆: 一家子都餓著等，你在外頭忙什麼咧。
+
+<<dim mother>>
+<<light Lan>>
+阿蘭: （我——）
+阿蘭: （說了也沒用。）
+<<dim Lan>>
+<<light mother>>
+婆婆: 過來幫我洗米，站在那裡做什麼。
+<<dim mother>>
+<<light Lan>>
+阿蘭: 是，阿婆。
+阿蘭: （這頓飯，又不是我煮的了。）
+
+<<adjust_stat "mood" -15>>
+<<adjust_favorability "grandmother" -10>>
+<<advance_time_minutes 60>>
+<<show mother false>>
+<<jump Scene_DinnerLate_Hall>>
+===
+
+title: Scene_DinnerLate_Hall
+---
+<<bg hall>>
+<<show mother true>>
+<<teleport mother -400>>
+<<dim mother>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+婆婆: 好了，端上桌。
+: <i>婆婆把碗排好，推給阿蘭。</i>
+<<dim Lan>>
+<<light mother>>
+婆婆: 快去，阿公等著咧。
+<<dim mother>>
+<<light Lan>>
+阿蘭: 是，阿婆。
+: <i>她把碗端進廳堂，一碗一碗放上桌。</i>
+: <i>最後那碗是她的。她看了一眼。</i>
+阿蘭: （又是鍋底刮來的。）
+: <i>她沒有坐下，站在桌邊把飯扒完。</i>
+阿蘭: （填進去就好，明天還要起來。）
+
+<<adjust_stat "health" 10>>
+<<set_flag "dinner_delivered">>
+<<show mother false>>
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_ServeDinner
+---
+<<advance_time_minutes 10>>
+: <i>盛了一輪，燈已經點起來了。</i>
+阿蘭: 端去廳堂給大家吃吧。
+<<set_flag "dinner_delivered">>
+<<adjust_stat "health" 20>>
 <<jump Scene_FreeRoam>>
 ===

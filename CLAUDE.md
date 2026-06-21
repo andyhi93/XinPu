@@ -10,3 +10,4 @@
 # 注意事項
 - 修改劇情請編輯 `Assets/Dialogues/Intro.yarn`，如果為劇情結束的地方，要回到自由模式，可使用<<jump Scene_FreeRoam>>
 - 新增腳本請放在 `Assets/Script/`
+- 與使用者溝通（說明、總結、回覆）一律使用繁體中文

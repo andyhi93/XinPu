@@ -25,7 +25,7 @@ public class ResourceManager : MonoBehaviour
 
     // 事件：提供給 UI 或其他系統監聽數值變化
     public event Action<string, object> OnStatChanged;
-    
+
     // 事件：好感度變化
     public event Action<string, float> OnFavorabilityChanged;
 
@@ -46,7 +46,8 @@ public class ResourceManager : MonoBehaviour
         { "tofu", 1 },
         { "driedFish", 1 },
         { "eggs", 1 },
-        { "firewood", 10 }
+        { "firewood", 10 },
+        { "water", 0 }
     };
 
     private void Awake()
@@ -75,7 +76,7 @@ public class ResourceManager : MonoBehaviour
         if (Instance == null) return;
 
         int intAmount = Mathf.RoundToInt(amount);
-        
+
         switch (statName.ToLower())
         {
             case "health":
@@ -177,7 +178,7 @@ public class ResourceManager : MonoBehaviour
         {
             dialogueRunner.StartDialogue(healthExhaustedNode);
         }
-        
+
         // 邏輯副作用：自動跳過一個時段（2 小時）
         if (TimeManager.Instance != null)
         {
@@ -292,5 +293,16 @@ public class ResourceManager : MonoBehaviour
         }
 
         Instance.ingredientStock[itemKey] = Mathf.Max(0, Instance.ingredientStock[itemKey] + amount);
+    }
+
+    /// <summary>
+    /// 透過 Yarn Spinner 取得物品數量。
+    /// 用法：<<if get_item("water") > 0>>
+    /// </summary>
+    [YarnFunction("get_item")]
+    public static int GetItem(string itemKey)
+    {
+        if (Instance == null) return 0;
+        return Instance.GetIngredientCount(itemKey);
     }
 }

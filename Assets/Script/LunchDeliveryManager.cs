@@ -53,10 +53,13 @@ public class LunchDeliveryManager : MonoBehaviour
         if (TimeManager.Instance == null || outsideHotspot == null) return;
 
         float currentTime = TimeManager.Instance.CurrentTimeInSeconds;
-        bool isFoodDone = KitchenMiniGame.IsFoodDone();
+        // 用 breakfast_delivered 而非 KitchenMiniGame.IsFoodDone()：
+        // 早飯熄火後（或婆婆代煮時，灶台狀態根本沒進入 Done）isFoodDone 會變 false，
+        // 但便當其實已經有了，不該因此被擋住。
+        bool isBreakfastDelivered = EventManager.HasFlag("breakfast_delivered");
 
-        // 只有在 12:00 之後、飯煮好了，且今天還沒送過便當才顯示 EventDot
-        if (currentTime >= TIME_1200 && isFoodDone && !EventManager.HasFlag("lunch_delivered"))
+        // 只有在 12:00 之後、早飯已經完成，且今天還沒送過便當才顯示 EventDot
+        if (currentTime >= TIME_1200 && isBreakfastDelivered && !EventManager.HasFlag("lunch_delivered"))
         {
             outsideHotspot.eventDot.SetActive(true);
             UpdateEventDotVisual(currentTime);

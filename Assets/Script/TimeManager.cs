@@ -20,6 +20,11 @@ public class TimeManager : MonoBehaviour
     private int currentBranchIndex = -1;
     private int lastHealthDeductionIndex = -1; // 用來紀錄上一次扣過體力的時辰索引
     private bool hasTriggeredMorningLate = false; // 是否已觸發過「遲到的早餐」事件
+    private bool hasTriggeredDinnerLate = false;   // 是否已觸發過「遲到的晚飯」事件
+
+    private int consecutiveDaysWithoutWater = 0; // 連續幾天沒燒水
+    private bool pendingNoWaterWarning = false;   // 是否已達 3 天門檻，等隔天早上觸發
+    private bool hasTriggeredNoWaterWarning = false; // 今天是否已經觸發過提醒（避免重複）
 
     // 十二地支映射
     private readonly string[] earthlyBranches = {
@@ -58,11 +63,42 @@ public class TimeManager : MonoBehaviour
         if (currentTimeInSeconds >= 24f * 3600f)
         {
             currentTimeInSeconds -= 24f * 3600f;
-            hasTriggeredMorningLate = false; // 每日重置觸發狀態
+            HandleDayRollover();
         }
 
         CheckForTimeEvents();
         UpdateBranchIndex();
+    }
+
+    /// <summary>
+    /// 跨日時的每日結算：重置「今天觸發過」的旗標，並結算連續幾天沒燒水。
+    /// 不只 Update() 裡的自然跨日會呼叫，手動推進時間（advance_time_minutes 等）跨日也會呼叫到。
+    /// </summary>
+    private void HandleDayRollover()
+    {
+        hasTriggeredMorningLate = false;
+        hasTriggeredDinnerLate = false;
+        hasTriggeredNoWaterWarning = false;
+
+        if (KitchenMiniGame.Instance != null)
+        {
+            KitchenMiniGame.Instance.ResetDailyState(); // 讓新的一天可以重新煮早飯
+        }
+
+        if (EventManager.HasFlag("water_boiled_today"))
+        {
+            consecutiveDaysWithoutWater = 0;
+        }
+        else
+        {
+            consecutiveDaysWithoutWater++;
+            if (consecutiveDaysWithoutWater >= 3)
+            {
+                pendingNoWaterWarning = true;
+            }
+        }
+
+        EventManager.ResetFixedFlags(); // 重置 breakfast_delivered／lunch_delivered／water_boiled_today 等每日旗標
     }
 
     private void CheckForTimeEvents()
@@ -71,7 +107,7 @@ public class TimeManager : MonoBehaviour
         {
             // 檢查飯是否煮好
             bool isFoodDone = KitchenMiniGame.IsFoodDone();
-            
+
             if (!isFoodDone)
             {
                 hasTriggeredMorningLate = true;
@@ -84,6 +120,31 @@ public class TimeManager : MonoBehaviour
             {
                 // 如果已經煮好了，今天就不再檢查（直到隔天重置）
                 hasTriggeredMorningLate = true;
+            }
+        }
+
+        if (!hasTriggeredDinnerLate && IsTimeAfter(19, 30))
+        {
+            bool isFoodDone = KitchenMiniGame.IsFoodDone();
+            bool dinnerDelivered = EventManager.HasFlag("dinner_delivered");
+
+            hasTriggeredDinnerLate = true;
+            if (!isFoodDone && !dinnerDelivered)
+            {
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.ForceStartDialogue("Scene_DinnerLate");
+                }
+            }
+        }
+
+        if (!hasTriggeredNoWaterWarning && pendingNoWaterWarning && IsTimeAfter(8, 0))
+        {
+            hasTriggeredNoWaterWarning = true;
+            pendingNoWaterWarning = false;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ForceStartDialogue("Scene_NoWaterWarning");
             }
         }
     }
@@ -147,6 +208,7 @@ public class TimeManager : MonoBehaviour
         if (currentTimeInSeconds >= 24f * 3600f)
         {
             currentTimeInSeconds -= 24f * 3600f;
+            HandleDayRollover();
         }
         UpdateBranchIndex();
         Debug.Log("【TimeManager】已手動推進 1 小時");
@@ -160,6 +222,7 @@ public class TimeManager : MonoBehaviour
         if (currentTimeInSeconds >= 24f * 3600f)
         {
             currentTimeInSeconds -= 24f * 3600f;
+            HandleDayRollover();
         }
         UpdateBranchIndex();
     }
@@ -175,6 +238,7 @@ public class TimeManager : MonoBehaviour
         if (Instance.currentTimeInSeconds >= 24f * 3600f)
         {
             Instance.currentTimeInSeconds -= 24f * 3600f;
+            Instance.HandleDayRollover();
         }
         Instance.UpdateBranchIndex();
     }

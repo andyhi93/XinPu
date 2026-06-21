@@ -212,9 +212,12 @@ public class KitchenMenu : MonoBehaviour
     {
         if (resultText != null)
         {
+            bool isDinner = TimeManager.IsTimeAfter(17, 0);
+            string mealName = isDinner ? "地瓜簽飯" : "地瓜簽粥";
+
             resultText.text = selectedAddItem != null
-                ? $"今天的飯：地瓜簽粥 + {selectedAddItem.displayName}"
-                : "今天的飯：地瓜簽粥";
+                ? $"今天的飯：{mealName} + {selectedAddItem.displayName}"
+                : $"今天的飯：{mealName}";
         }
 
         var (effect, missing) = CalculateMealEffect();

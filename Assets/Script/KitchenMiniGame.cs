@@ -50,6 +50,7 @@ public class KitchenMiniGame : MonoBehaviour
     [SerializeField] private bool isAddingFire = false; // 是否正在執行加柴動畫（防止連點）
     [SerializeField] private bool hasServed = false;     // 是否已經盛飯
     [SerializeField] private bool hasStoppedFire = false; // 這一輪是否已經按過熄火
+    [SerializeField] private bool lastCookWasDinner = false; // 這一輪煮的是早飯還是晚飯
 
     private CanvasGroup lightFireCG; // 點火按鈕的透明度控制
     private CanvasGroup addWoodCG;   // 加柴按鈕的透明度控制
@@ -237,16 +238,25 @@ public class KitchenMiniGame : MonoBehaviour
                 case KitchenState.Warming: statusText.text = "暖火中"; break;
                 case KitchenState.Cooking: statusText.text = "烹煮中"; break;
                 case KitchenState.Extinguished:
-                    statusText.text = (hasStoppedFire && hasServed)
-                        ? "今天早上的飯已經煮過了，晚上再來煮晚飯吧。"
-                        : "火熄了，重新點火";
+                    if (hasStoppedFire && hasServed)
+                    {
+                        statusText.text = lastCookWasDinner
+                            ? "今天的晚飯已經煮過了，明天再來吧。"
+                            : "今天早上的飯已經煮過了，晚上再來煮晚飯吧。";
+                    }
+                    else
+                    {
+                        statusText.text = "火熄了，重新點火";
+                    }
                     break;
                 case KitchenState.Done: statusText.text = "煮好了"; break;
             }
         }
 
-        // 更新點火按鈕可用性（僅在未點火或已熄滅時可用；這一輪已經盛飯+熄火就不能再點）
-        bool lightFireInteractable = (state == KitchenState.Unlit || state == KitchenState.Extinguished) && !(hasStoppedFire && hasServed);
+        // 更新點火按鈕可用性（僅在未點火或已熄滅時可用；這一輪已經盛飯+熄火，且還是同一餐時段就不能再點）
+        bool isDinnerNow = TimeManager.IsTimeAfter(17, 0);
+        bool blockRelight = hasStoppedFire && hasServed && isDinnerNow == lastCookWasDinner;
+        bool lightFireInteractable = (state == KitchenState.Unlit || state == KitchenState.Extinguished) && !blockRelight;
         SetButtonState(lightFireButton, lightFireCG, lightFireInteractable);
 
         // 更新加柴按鈕可用性（在暖火或烹煮中，且動畫未執行時可用）
@@ -294,7 +304,10 @@ public class KitchenMiniGame : MonoBehaviour
     /// </summary>
     public void OnClickLightFire()
     {
-        if (hasStoppedFire && hasServed) return; // 這一輪已經盛飯+熄火，先不能重新點火
+        bool isDinnerNow = TimeManager.IsTimeAfter(17, 0);
+
+        // 這一輪已經盛飯+熄火，且還是同一個時段（早飯/晚飯），先不能重新點火
+        if (hasStoppedFire && hasServed && isDinnerNow == lastCookWasDinner) return;
 
         if (state == KitchenState.Unlit || state == KitchenState.Extinguished)
         {
@@ -304,9 +317,10 @@ public class KitchenMiniGame : MonoBehaviour
             // 先給予基礎火力，避免 Update 立即判定小於 16 而熄滅
             fireLevel = 20f;
 
-            // 開始新一輪煮飯，重置上一輪的盛飯／熄火紀錄
+            // 開始新一輪煮飯，重置上一輪的盛飯／熄火紀錄，並記錄這輪煮的是哪一餐
             hasServed = false;
             hasStoppedFire = false;
+            lastCookWasDinner = isDinnerNow;
 
             StartCoroutine(RaiseFireCoroutine(20f)); // 觸發火力進一步上升
             EventManager.SetFlag("kitchen_fire_lit", true);
@@ -394,8 +408,20 @@ public class KitchenMiniGame : MonoBehaviour
         if (GameManager.Instance != null)
         {
             GameManager.Instance.CloseKitchenGame(); // 先回到 FreeRoam 並切換地點
-            GameManager.Instance.StartDialogue("Scene_ServeFood"); // 接著啟動對話進入 Dialogue 模式
+
+            // 早飯是盛給每個人的完整流程，晚飯目前是簡化版本
+            string targetScene = lastCookWasDinner ? "Scene_ServeDinner" : "Scene_ServeFood";
+            GameManager.Instance.StartDialogue(targetScene); // 接著啟動對話進入 Dialogue 模式
         }
+    }
+
+    /// <summary>
+    /// 跨日時呼叫：重置「這一輪盛飯／熄火」紀錄，讓新的一天可以重新煮早飯
+    /// </summary>
+    public void ResetDailyState()
+    {
+        hasServed = false;
+        hasStoppedFire = false;
     }
 
     /// <summary>
