@@ -105,3 +105,6 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 .vsconfig
+# TextMeshPro auto-generated SDF font assets
+/[Aa]ssets/Font/*SDF.asset
+/[Aa]ssets/Font/*SDF.asset.meta

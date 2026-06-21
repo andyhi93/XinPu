@@ -737,8 +737,7 @@ title: Scene_Laundry
 
 title: Scene_Market
 ---
-阿蘭: （今天先不去。）
-<<go_to_location 0>>
+<<open_shop>>
 ===
 
 title: Scene_LunchDelivery

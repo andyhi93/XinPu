@@ -12,7 +12,7 @@ public class ResourceManager : MonoBehaviour
     [Header("基礎數值")]
     [SerializeField] private int health = 100;
     [SerializeField] private int mood = 100;
-    [SerializeField] private int money = 100;
+    [SerializeField] private int money = 150;
     [SerializeField] private FavorLevel motherInLawFavor = FavorLevel.普通;
 
     [Header("預留數值 (原型開發用)")]
@@ -40,14 +40,18 @@ public class ResourceManager : MonoBehaviour
     // 新增：食材庫存系統（地瓜永遠無限，不在此追蹤數量；也用來存放柴薪等一般消耗品）
     private Dictionary<string, int> ingredientStock = new Dictionary<string, int>()
     {
-        { "rice", 3 },
-        { "oil", 5 },
-        { "salt", 5 },
+        { "rice", 6 },
+        { "oil", 6 },
+        { "salt", 8 },
         { "tofu", 1 },
         { "driedFish", 1 },
         { "eggs", 1 },
         { "firewood", 10 },
-        { "water", 0 }
+        { "water", 0 },
+        { "riceBran", 4 },
+        { "cloth", 0 },
+        { "medicine", 0 },
+        { "pickledVeg", 0 }
     };
 
     private void Awake()

@@ -85,6 +85,11 @@ public class TimeManager : MonoBehaviour
             KitchenMiniGame.Instance.ResetDailyState(); // 讓新的一天可以重新煮早飯
         }
 
+        if (ShoppingMenu.Instance != null)
+        {
+            ShoppingMenu.Instance.ResetDailyStock(); // 市場明天重新隨機上架
+        }
+
         if (EventManager.HasFlag("water_boiled_today"))
         {
             consecutiveDaysWithoutWater = 0;

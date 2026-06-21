@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour
     public KitchenMiniGame kitchenGame;     // 在 Inspector 中拖入
     public KitchenMenu kitchenMenu;         // 在 Inspector 中拖入
     public PigFoodMiniGame pigFoodGame;     // 在 Inspector 中拖入
+    public ShoppingMenu shoppingMenu;       // 在 Inspector 中拖入
 
     [Header("早餐狀態")]
     [SerializeField] private LocationManager.Location diningHallLocation = LocationManager.Location.廳堂;
@@ -68,7 +69,8 @@ public class GameManager : MonoBehaviour
         {
             dialogueRunner.AddCommandHandler("open_kitchen", OpenKitchenGame);
             dialogueRunner.AddCommandHandler("open_pig_food", OpenPigFoodGame);
-            
+            dialogueRunner.AddCommandHandler("open_shop", OpenShoppingMenu);
+
             dialogueRunner.AddFunction("is_pig_food_done", () => pigFoodGame != null && pigFoodGame.IsPigFoodDone());
             dialogueRunner.AddFunction("is_pig_food_cooking", () => pigFoodGame != null && pigFoodGame.IsPigFoodCooking());
         }
@@ -230,6 +232,27 @@ public class GameManager : MonoBehaviour
             Debug.Log("【GameManager】開啟煮豬菜小遊戲。");
             SetGameState(GameState.Minigame);
             pigFoodGame.OpenPigFoodWindow();
+        }
+    }
+
+    public void OpenShoppingMenu()
+    {
+        if (shoppingMenu != null)
+        {
+            Debug.Log("【GameManager】進入第一市場，開啟商店。");
+            SetGameState(GameState.Minigame);
+            shoppingMenu.OpenMenu();
+        }
+    }
+
+    public void CloseShoppingMenu()
+    {
+        Debug.Log("【GameManager】商店關閉，返回三合院。");
+        SetGameState(GameState.FreeRoam);
+
+        if (LocationManager.Instance != null)
+        {
+            LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
         }
     }
 
