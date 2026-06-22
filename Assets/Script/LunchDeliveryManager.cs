@@ -9,7 +9,7 @@ public class LunchDeliveryManager : MonoBehaviour
     [SerializeField] private LocationManager.Location outsideLocation = LocationManager.Location.外出;
 
     [Header("時間點 (秒)")]
-    private const float TIME_1200 = 12f * 3600f;
+    private const float TIME_1100 = 11f * 3600f;
     private const float TIME_1300 = 13f * 3600f;
 
     [Header("顏色設定")]
@@ -58,8 +58,8 @@ public class LunchDeliveryManager : MonoBehaviour
         // 但便當其實已經有了，不該因此被擋住。
         bool isBreakfastDelivered = EventManager.HasFlag("breakfast_delivered");
 
-        // 只有在 12:00 之後、早飯已經完成，且今天還沒送過便當才顯示 EventDot
-        if (currentTime >= TIME_1200 && isBreakfastDelivered && !EventManager.HasFlag("lunch_delivered"))
+        // 只有在 11:00 之後、早飯已經完成，且今天還沒送過便當才顯示 EventDot
+        if (currentTime >= TIME_1100 && isBreakfastDelivered && !EventManager.HasFlag("lunch_delivered"))
         {
             outsideHotspot.eventDot.SetActive(true);
             UpdateEventDotVisual(currentTime);

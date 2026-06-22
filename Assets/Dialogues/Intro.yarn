@@ -5,7 +5,7 @@
 title: Scene_Morning
 ---
 <<set_time "卯">>
-<<bg house_am>>
+<<bg house>>
 <<teleport Lan 0 -300>>
 <<light Lan>>
 <<face Lan tired>>
@@ -90,7 +90,7 @@ title: ServeFood_Done
 
 title: Scene_Hall
 ---
-<<bg house_pm>> // 可以依據需求替換背景
+<<bg house>> // 可以依據需求替換背景
 : <i>走進了廳堂。</i>
 
 <<if has_flag("breakfast_delivered")>>
@@ -476,7 +476,7 @@ title: Scene_05
 
 title: Scene_06
 ---
-<<bg house_pm>>
+<<bg house>>
 <<show auntie false>>
 <<show mother true>>
 <<teleport mother -300>>
@@ -711,7 +711,7 @@ title: Scene_BoilWater
 
 title: Scene_NoWaterWarning
 ---
-<<bg house_am>>
+<<bg house>>
 <<show mother true>>
 <<teleport mother -300>>
 <<dim Lan>>
@@ -859,9 +859,9 @@ title: Scene_Outside_Menu
 ---
 阿蘭: （要去哪裡咧？）
 
--> 送便當去田邊 <<if not has_flag("lunch_delivered") and has_flag("breakfast_delivered") and is_time_after(12, 0)>>
+-> 送便當去田邊 <<if not has_flag("lunch_delivered") and has_flag("breakfast_delivered") and is_time_after(11, 0)>>
     <<jump Scene_LunchDelivery>>
--> 送便當去田邊（還沒到午時） <<if not has_flag("lunch_delivered") and has_flag("breakfast_delivered") and not is_time_after(12, 0)>>
+-> 送便當去田邊（還沒到午時） <<if not has_flag("lunch_delivered") and has_flag("breakfast_delivered") and not is_time_after(11, 0)>>
     阿蘭: （才剛早上，便當等中午再送咧。）
     <<jump Scene_Outside_Menu>>
 -> 送便當去田邊（飯還沒煮好） <<if not has_flag("lunch_delivered") and not has_flag("breakfast_delivered")>>
@@ -916,11 +916,14 @@ title: Scene_Road_ToTown
 
 title: Scene_TownMenu
 ---
+<<bg road>>
 阿蘭: （到了街上，要去哪裡咧？）
 
 -> 去洗衫窟 <<if not has_flag("laundry_done")>>
+    <<bg lake>>
     <<jump Scene_Laundry>>
 -> 去第一市場
+    <<bg FirstMarket>>
     <<open_market_ui>>
 -> 下街逛逛（順路撿資訊） <<if not has_flag("town_looked_around")>>
     <<advance_time_minutes 10>>
