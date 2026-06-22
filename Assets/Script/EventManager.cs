@@ -425,14 +425,17 @@ public class EventManager : MonoBehaviour
     // 丈夫在田裡吃便當，早飯對他的好感度影響只有一半
     private const float HusbandFavorabilityMultiplier = 0.5f;
 
+    // 最近一次煮飯選的加菜：對應 KitchenMenu 的 resourceKey（"tofu"／"driedFish"／"eggs"），沒加菜則是 "none"
+    private string lastMealAddon = "none";
+
     /// <summary>
     /// 記錄一次煮飯的加菜選擇與計算出的好感度效果，並套用到公公、婆婆、丈夫的好感度。
     /// 由 KitchenMenu 的煮飯按鈕呼叫。
     /// </summary>
     public void RecordKitchenMealChoice(string addItemKey, int favorabilityResult)
     {
-        string addItemLabel = string.IsNullOrEmpty(addItemKey) ? "無加菜" : addItemKey;
-        Debug.Log($"【事件系統】煮飯選擇：{addItemLabel}，好感度效果：{favorabilityResult}");
+        lastMealAddon = string.IsNullOrEmpty(addItemKey) ? "none" : addItemKey;
+        Debug.Log($"【事件系統】煮飯選擇：{lastMealAddon}，好感度效果：{favorabilityResult}");
 
         if (ResourceManager.Instance != null)
         {
@@ -440,5 +443,15 @@ public class EventManager : MonoBehaviour
             ResourceManager.Instance.ModifyFavorability("grandmother", favorabilityResult);
             ResourceManager.Instance.ModifyFavorability("husband", favorabilityResult * HusbandFavorabilityMultiplier);
         }
+    }
+
+    /// <summary>
+    /// Yarn 函式：查詢最近一次煮飯選的加菜。用法：<<if get_meal_addon() == "eggs">>
+    /// 回傳值："eggs"、"tofu"、"driedFish" 或 "none"。
+    /// </summary>
+    [YarnFunction("get_meal_addon")]
+    public static string GetMealAddon()
+    {
+        return Instance != null ? Instance.lastMealAddon : "none";
     }
 }

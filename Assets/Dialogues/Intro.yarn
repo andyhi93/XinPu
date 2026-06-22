@@ -240,12 +240,42 @@ title: Scene_DiningHall
 
     阿婆: 阿寶，來阿婆這裡坐。
     孩子: 阿婆！
+
 <<else>>
     公公: 坐落來吃。
     阿蘭: 好，阿爸先吃。
     阿婆: 阿寶，來，阿婆幫你盛。
-    孩子: 阿婆，今天有蛋嗎？
-    阿婆: 哪有蛋，乖，粥也甜咧。
+
+    <<if get_meal_addon() == "eggs">>
+        孩子: 阿婆，今天有蛋！
+        阿婆: 有啊，你阿姆今天有心咧。
+        : <i>婆婆看了阿蘭一眼，沒有再說話，但臉色比平時和緩。</i>
+        <<adjust_favorability "grandmother" 3>>
+        公公: 嗯，不錯。
+        <<adjust_favorability "grandfather" 3>>
+
+    <<elseif get_meal_addon() == "tofu">>
+        孩子: 阿婆，今天有蛋嗎？
+        阿婆: 今天有豆腐，也是好咧，吃了。
+        孩子: 好！
+        公公: 坐落來吃。
+        阿蘭: （豆腐今天買得剛好。）
+
+    <<elseif get_meal_addon() == "driedFish">>
+        孩子: 阿婆，今天有蛋嗎？
+        阿婆: 今天有魚乾，比蛋還香咧，快來。
+        孩子: 有魚乾！
+        : <i>公公低頭聞了一下，筷子先動了。</i>
+        公公: 今天有弄吃的，好。
+        <<adjust_favorability "grandfather" 5>>
+        阿蘭: （阿公難得說話。）
+
+    <<else>>
+        孩子: 阿婆，今天有蛋嗎？
+        阿婆: 哪有蛋，乖，粥也甜咧。
+        孩子: 哦……
+    <<endif>>
+
 <<endif>>
 
 : <i>他們吃著，我在旁邊收拾碗筷。</i>
@@ -253,9 +283,11 @@ title: Scene_DiningHall
 : <i>粥還溫，站著喝完。</i>
 
 <<adjust_stat "health" 20>>
-
 : <i>填了些東西，身子稍微有力氣了。</i>
 
+<<show father false>>
+<<show mother false>>
+<<show child false>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -574,8 +606,11 @@ title: Scene_KitchenMenu
 <<if is_kitchen_unfinished()>>
     -> 煮飯（好像有事情還沒做）
         <<open_kitchen>>
-    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0>>
+    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0 and get_item("firewood") > 0>>
         <<jump Scene_CookPigFood>>
+    -> 煮豬菜（柴薪不足） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0 and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
     -> 煮豬菜（繼續處理） <<if not is_pig_food_done_for_now() and has_flag("pig_food_leaf_consumed")>>
         <<open_pig_food>>
     -> 煮豬菜（沒有地瓜葉） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") <= 0>>
@@ -584,8 +619,11 @@ title: Scene_KitchenMenu
     -> 煮豬菜（今天已經煮過了） <<if is_pig_food_done_for_now()>>
         阿蘭: （今天的豬菜已經煮好餵過了，明天再煮吧。）
         <<jump Scene_FreeRoam>>
-    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today") and get_item("firewood") > 0>>
         <<jump Scene_BoilWater>>
+    -> 燒水（柴薪不足） <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today") and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
     -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
         <<jump Scene_FreeRoam>>
@@ -599,8 +637,11 @@ title: Scene_KitchenMenu
         阿蘭: （今天早上的飯已經煮過了，晚上再來煮晚飯吧。）
         <<go_to_location 0>>
         <<jump Scene_FreeRoam>>
-    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0>>
+    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0 and get_item("firewood") > 0>>
         <<jump Scene_CookPigFood>>
+    -> 煮豬菜（柴薪不足） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0 and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
     -> 煮豬菜（繼續處理） <<if not is_pig_food_done_for_now() and has_flag("pig_food_leaf_consumed")>>
         <<open_pig_food>>
     -> 煮豬菜（沒有地瓜葉） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") <= 0>>
@@ -609,8 +650,11 @@ title: Scene_KitchenMenu
     -> 煮豬菜（今天已經煮過了） <<if is_pig_food_done_for_now()>>
         阿蘭: （今天的豬菜已經煮好餵過了，明天再煮吧。）
         <<jump Scene_FreeRoam>>
-    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today") and get_item("firewood") > 0>>
         <<jump Scene_BoilWater>>
+    -> 燒水（柴薪不足） <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today") and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
     -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
         <<jump Scene_FreeRoam>>
@@ -620,10 +664,18 @@ title: Scene_KitchenMenu
         <<go_to_location 0>>
         <<jump Scene_FreeRoam>>
 <<else>>
-    -> 煮飯
+    -> 煮飯（繼續處理） <<if is_kitchen_session_active()>>
         <<open_kitchen>>
-    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0>>
+    -> 煮飯 <<if not is_kitchen_session_active() and get_item("firewood") > 0>>
+        <<jump Scene_ConfirmCookRice>>
+    -> 煮飯（柴薪不足） <<if not is_kitchen_session_active() and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
+    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0 and get_item("firewood") > 0>>
         <<jump Scene_CookPigFood>>
+    -> 煮豬菜（柴薪不足） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0 and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
     -> 煮豬菜（繼續處理） <<if not is_pig_food_done_for_now() and has_flag("pig_food_leaf_consumed")>>
         <<open_pig_food>>
     -> 煮豬菜（沒有地瓜葉） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") <= 0>>
@@ -632,8 +684,11 @@ title: Scene_KitchenMenu
     -> 煮豬菜（今天已經煮過了） <<if is_pig_food_done_for_now()>>
         阿蘭: （今天的豬菜已經煮好餵過了，明天再煮吧。）
         <<jump Scene_FreeRoam>>
-    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
+    -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today") and get_item("firewood") > 0>>
         <<jump Scene_BoilWater>>
+    -> 燒水（柴薪不足） <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today") and get_item("firewood") <= 0>>
+        阿蘭: （柴不夠了，要去撿咧。）
+        <<jump Scene_FreeRoam>>
     -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
         <<jump Scene_FreeRoam>>
@@ -645,12 +700,25 @@ title: Scene_KitchenMenu
 <<endif>>
 ===
 
+title: Scene_ConfirmCookRice
+---
+阿蘭: （煮飯要用 1 份柴薪，確定要煮嗎？）
+
+-> 煮，開始準備食材
+    <<adjust_item "firewood" -1>>
+    <<open_kitchen>>
+-> 先不煮，柴薪還是要省
+    阿蘭: （再等等好了。）
+    <<jump Scene_FreeRoam>>
+===
+
 title: Scene_CookPigFood
 ---
-阿蘭: （煮豬菜要用 1 份地瓜葉，確定要煮嗎？）
+阿蘭: （煮豬菜要用 1 份地瓜葉、1 份柴薪，確定要煮嗎？）
 
 -> 煮，去剁菜
     <<adjust_item "sweetPotatoLeaves" -1>>
+    <<adjust_item "firewood" -1>>
     <<set_flag "pig_food_leaf_consumed">>
     <<open_pig_food>>
 -> 先不煮，地瓜葉還是要省
@@ -907,8 +975,8 @@ title: Scene_Road_ToTown
 
 -> 順手撿些柴帶著
     阿蘭: （空手是浪費。）
-    <<adjust_item "firewood" 2>>
-    : <i>撿了兩把枯枝綁好，順手提著。</i>
+    <<adjust_item "firewood" 3>>
+    : <i>撿了幾把枯枝綁好，順手提著。</i>
     <<jump Scene_TownMenu>>
 -> 直接走，不耽誤時間
     <<jump Scene_TownMenu>>
@@ -944,7 +1012,14 @@ title: Scene_Road_Home
 
 : <i>往回走，三合院的屋頂慢慢出現在前面。</i>
 阿蘭: （出來一趟，不知道家裡現在怎樣了。）
-<<jump Scene_FreeRoam>>
+
+-> 順手撿些柴帶著
+    阿蘭: （空手是浪費。）
+    <<adjust_item "firewood" 3>>
+    : <i>撿了幾把枯枝綁好，順手提著。</i>
+    <<jump Scene_FreeRoam>>
+-> 直接走，不耽誤時間
+    <<jump Scene_FreeRoam>>
 ===
 
 title: Scene_Laundry
@@ -1340,6 +1415,17 @@ title: Scene_DailySettlement
 <<endif>>
 
 <<advance_to_next_day>>
+<<jump Scene_SleepWake>>
+===
+
+title: Scene_SleepWake
+---
+<<bg house>>
+<<teleport Lan 0 -300>>
+<<light Lan>>
+: <i>她吹熄了燈，在黑暗中躺下。</i>
+: <i>……</i>
+: <i>雞啼了一聲，天光從窗縫透進來，又是新的一天。</i>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1369,5 +1455,6 @@ title: Scene_FinalSettlement
 : <i>明天又是新的一天。</i>
 
 <<trigger_ending>>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===

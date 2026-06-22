@@ -427,6 +427,8 @@ public class KitchenMiniGame : MonoBehaviour
             kitchenGame.SetActive(false);
         }
 
+        NotifyIfMealFullyDone();
+
         // 透過 GameManager 啟動對話，這會自動處理狀態切換
         if (GameManager.Instance != null)
         {
@@ -435,6 +437,18 @@ public class KitchenMiniGame : MonoBehaviour
             // 早飯是盛給每個人的完整流程，晚飯目前是簡化版本
             string targetScene = lastCookWasDinner ? "Scene_ServeDinner" : "Scene_ServeFood";
             GameManager.Instance.StartDialogue(targetScene); // 接著啟動對話進入 Dialogue 模式
+        }
+    }
+
+    /// <summary>
+    /// 盛飯跟熄火都做完了（這一輪煮飯完整結束），通知 GameManager 清掉「食材已選好」狀態，
+    /// 下一輪（例如晚飯）才會重新詢問柴薪、重新走食材選單，而不是誤判成「還在繼續上一輪」。
+    /// </summary>
+    private void NotifyIfMealFullyDone()
+    {
+        if (hasServed && hasStoppedFire && GameManager.Instance != null)
+        {
+            GameManager.Instance.ResetKitchenIngredientsSelected();
         }
     }
 
@@ -510,6 +524,8 @@ public class KitchenMiniGame : MonoBehaviour
 
         fireTimerActive = false;
         fireEventTriggered = false;
+
+        NotifyIfMealFullyDone();
 
         EventManager.SetFlag("kitchen_fire_lit", false);
 

@@ -27,6 +27,14 @@ public class GameManager : MonoBehaviour
     public PigFoodMiniGame pigFoodGame;     // 在 Inspector 中拖入
     public ShoppingMenu shoppingMenu;       // 在 Inspector 中拖入
 
+    [Header("對話 UI")]
+    [Tooltip("拖入 'Dialogue System (1) Variant' 底下的 'Canvas' 子物件。\n" +
+        "原因：Yarn Spinner 的 LinePresenter 只會淡入淡出畫面的 Alpha，CanvasGroup 的 Blocks Raycasts 永遠是 true，\n" +
+        "package 本身不會在沒有台詞時關閉它。這個底部對話框區域因此會一直擋住點擊，\n" +
+        "包含畫面下方的小遊戲／選單按鈕（例如灶房選單的「開始煮飯」）。\n" +
+        "這裡只在 GameState.Dialogue 時才開啟這個 Canvas，其餘狀態關閉，避免擋到其他 UI。")]
+    [SerializeField] private GameObject dialogueCanvas;
+
     [Header("早餐狀態")]
     [SerializeField] private LocationManager.Location diningHallLocation = LocationManager.Location.廳堂;
 
@@ -187,6 +195,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 供 Yarn 腳本檢查：這一輪煮飯是不是已經選過食材、正在進行中（不管有沒有把小遊戲視窗關起來）。
+    /// 用來判斷「煮飯」選項要直接恢復小遊戲，還是要先問柴薪、走食材選單。
+    /// </summary>
+    [YarnFunction("is_kitchen_session_active")]
+    public static bool IsKitchenSessionActive()
+    {
+        return Instance != null && Instance.kitchenIngredientsSelected;
+    }
+
     public void OpenKitchenGame()
     {
         if (!kitchenIngredientsSelected)
@@ -218,6 +236,15 @@ public class GameManager : MonoBehaviour
         {
             kitchenGame.OpenGame();
         }
+    }
+
+    /// <summary>
+    /// 由 KitchenMiniGame 呼叫：這一輪飯已經盛出且火也熄了（完整跑完一次），
+    /// 把「食材已選好」的狀態清掉，下一輪（例如晚飯）才會重新詢問柴薪、重新走食材選單。
+    /// </summary>
+    public void ResetKitchenIngredientsSelected()
+    {
+        kitchenIngredientsSelected = false;
     }
 
     public void CloseKitchenGame()
@@ -364,7 +391,7 @@ public class GameManager : MonoBehaviour
     public void SetGameState(GameState newState)
     {
         currentState = newState;
-        
+
         switch (newState)
         {
             case GameState.Dialogue:
@@ -380,7 +407,14 @@ public class GameManager : MonoBehaviour
                 if (TimeManager.Instance != null) TimeManager.Instance.isGamePaused = false;
                 break;
         }
-        
+
+        // 只有真的在對話時才需要對話框 Canvas 接收點擊；其餘狀態關閉，
+        // 避免它底部那塊一直存在的隱形 Blocks Raycasts 區域擋住小遊戲/選單的按鈕。
+        if (dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(newState == GameState.Dialogue);
+        }
+
         Debug.Log($"【GameManager】模式切換至：{newState}");
     }
 

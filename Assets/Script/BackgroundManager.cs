@@ -52,6 +52,24 @@ public class BackgroundManager : MonoBehaviour
         new LocationBackgroundEntry { location = LocationManager.Location.外出, backgroundName = "house" },
     };
 
+    [Header("日夜變色")]
+    [Tooltip("白天的背景顏色")]
+    public Color dayColor = Color.white;
+    [Tooltip("夜晚的背景顏色：用顏色變暗（混入黑色），不是調透明度，所以 Alpha 請維持 1")]
+    public Color nightColor = new Color(0.35f, 0.35f, 0.42f, 1f);
+    [Tooltip("顏色淡入淡出的速度，數字越大切換越快")]
+    public float colorTransitionSpeed = 1.5f;
+
+    // 十二時辰對應的亮度（1 = 白天全亮，數字越小越暗），時辰名稱要跟 TimeManager 的地支字串一致
+    private static readonly Dictionary<string, float> TimeBrightness = new Dictionary<string, float>
+    {
+        { "子", 0.3f }, { "丑", 0.3f }, { "寅", 0.5f }, { "卯", 0.75f },
+        { "辰", 1f }, { "巳", 1f }, { "午", 1f }, { "未", 1f }, { "申", 1f },
+        { "酉", 0.75f }, { "戌", 0.5f }, { "亥", 0.3f },
+    };
+
+    private Color targetColor = Color.white;
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -66,6 +84,20 @@ public class BackgroundManager : MonoBehaviour
             // 啟動時手動套用一次目前地點，因為 OnLocationChanged 只有在「切換」時才會觸發
             HandleLocationChanged(LocationManager.Instance.CurrentLocation);
         }
+
+        if (TimeManager.Instance != null)
+        {
+            TimeManager.Instance.OnTimePeriodChanged += HandleTimePeriodChanged;
+            // 啟動時手動套用一次目前時辰，理由同上
+            HandleTimePeriodChanged(TimeManager.Instance.GetCurrentTime());
+            if (bgImage != null) bgImage.color = targetColor; // 開場直接套用，不要從白色淡入
+        }
+    }
+
+    private void Update()
+    {
+        if (bgImage == null) return;
+        bgImage.color = Color.Lerp(bgImage.color, targetColor, Time.deltaTime * colorTransitionSpeed);
     }
 
     private void OnDestroy()
@@ -73,6 +105,11 @@ public class BackgroundManager : MonoBehaviour
         if (LocationManager.Instance != null)
         {
             LocationManager.Instance.OnLocationChanged -= HandleLocationChanged;
+        }
+
+        if (TimeManager.Instance != null)
+        {
+            TimeManager.Instance.OnTimePeriodChanged -= HandleTimePeriodChanged;
         }
     }
 
@@ -86,6 +123,15 @@ public class BackgroundManager : MonoBehaviour
         {
             ChangeBackground(entry.backgroundName);
         }
+    }
+
+    /// <summary>
+    /// 時辰切換時：依亮度表更新背景目標顏色，由 Update() 平滑淡到這個顏色。
+    /// </summary>
+    private void HandleTimePeriodChanged(string branch)
+    {
+        float brightness = TimeBrightness.TryGetValue(branch, out float b) ? b : 1f;
+        targetColor = Color.Lerp(nightColor, dayColor, brightness);
     }
 
     /// <summary>

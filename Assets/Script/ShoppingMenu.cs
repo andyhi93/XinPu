@@ -58,6 +58,7 @@ public class ShoppingMenu : MonoBehaviour
         ("rice",      "米",   5,  1f),
         ("riceBran",  "米糠", 1,  1f),
         ("sweetPotatoLeaves", "地瓜葉", 1, 1f),
+        ("firewood",  "木柴", 2,  1f),
         ("salt",      "鹽",   2,  0.6f),
         ("oil",       "油",   4,  0.6f),
         ("cloth",     "布料", 8,  0.3f),
@@ -71,8 +72,12 @@ public class ShoppingMenu : MonoBehaviour
         ("pickledVeg", "醃菜", 2),
     };
 
-    // 米油鹽米糠地瓜葉每買一份算 3 天份，其他物品買一份就是一個
-    private static readonly HashSet<string> ThreeDayItems = new() { "rice", "oil", "salt", "riceBran", "sweetPotatoLeaves" };
+    // 每買一份實際得到的數量：米油鹽米糠地瓜葉是 3 份，木柴是 5 份，沒列在這裡的物品買一份就是一個
+    private static readonly Dictionary<string, int> BulkPurchaseMultipliers = new()
+    {
+        { "rice", 3 }, { "oil", 3 }, { "salt", 3 }, { "riceBran", 3 }, { "sweetPotatoLeaves", 3 },
+        { "firewood", 5 },
+    };
 
     // 今天決定要上架的種類（只記種類，不含執行期的 selectedAmount）
     private List<(string key, string name, int price)> todaysMarketRoll;
@@ -387,8 +392,8 @@ public class ShoppingMenu : MonoBehaviour
             foreach (var item in currentItems)
             {
                 if (item.selectedAmount <= 0) continue;
-                int stockDelta = ThreeDayItems.Contains(item.itemKey) ? item.selectedAmount * 3 : item.selectedAmount;
-                ResourceManager.AdjustItem(item.itemKey, stockDelta);
+                int multiplier = BulkPurchaseMultipliers.TryGetValue(item.itemKey, out int m) ? m : 1;
+                ResourceManager.AdjustItem(item.itemKey, item.selectedAmount * multiplier);
             }
 
             ResourceManager.AdjustStat("money", -total);
