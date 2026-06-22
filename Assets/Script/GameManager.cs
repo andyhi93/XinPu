@@ -33,6 +33,9 @@ public class GameManager : MonoBehaviour
     // 是否已經在 KitchenMenu 選好這一餐的食材，選好之前進灶房都先開選單
     private bool kitchenIngredientsSelected = false;
 
+    // 商店是否是從進鎮的 Scene_TownMenu 開啟的，關閉後要跳回 Scene_TownMenu 而不是直接回三合院
+    private bool shopOpenedFromTown = false;
+
     private void Awake()
     {
         if (Instance == null)
@@ -259,14 +262,35 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 供 Yarn 指令使用：從 Scene_TownMenu 開啟市場 UI，跟 open_shop 的差別只在於
+    /// 關閉後要回到 Scene_TownMenu，而不是直接跳回三合院。
+    /// </summary>
+    [YarnCommand("open_market_ui")]
+    public static void OpenMarketFromTown()
+    {
+        if (Instance == null) return;
+        Instance.shopOpenedFromTown = true;
+        Instance.OpenShoppingMenu();
+    }
+
     public void CloseShoppingMenu()
     {
-        Debug.Log("【GameManager】商店關閉，返回三合院。");
         SetGameState(GameState.FreeRoam);
 
-        if (LocationManager.Instance != null)
+        if (shopOpenedFromTown)
         {
-            LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
+            Debug.Log("【GameManager】商店關閉，返回鎮上選單。");
+            shopOpenedFromTown = false;
+            StartDialogue("Scene_TownMenu");
+        }
+        else
+        {
+            Debug.Log("【GameManager】商店關閉，返回三合院。");
+            if (LocationManager.Instance != null)
+            {
+                LocationManager.Instance.GoToLocation(LocationManager.Location.三合院);
+            }
         }
     }
 

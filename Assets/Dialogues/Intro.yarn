@@ -870,10 +870,8 @@ title: Scene_Outside_Menu
 -> 送便當去田邊（今天已經送過了） <<if has_flag("lunch_delivered")>>
     阿蘭: （今天已經送過便當了，不用再送一次。）
     <<jump Scene_Outside_Menu>>
--> 去第一市場 <<if has_flag("afternoon_hall_visited") and not has_flag("morning_late") and not is_time_after(15, 0)>>
-    <<jump Scene_Market>>
--> 去洗衫窟 <<if has_flag("afternoon_hall_visited") and not has_flag("morning_late") and not is_time_after(15, 0)>>
-    <<jump Scene_Laundry>>
+-> 出發去鎮上 <<if has_flag("afternoon_hall_visited") and not has_flag("morning_late") and not is_time_after(15, 0)>>
+    <<jump Scene_TownTripConfirm>>
 -> 出去走走（還沒問過婆婆） <<if not has_flag("afternoon_hall_visited")>>
     阿蘭: （還沒問過婆婆，不確定能不能出去走走，先回廳堂問問看。）
     <<jump Scene_Outside_Menu>>
@@ -887,15 +885,78 @@ title: Scene_Outside_Menu
     <<go_to_location 0>>
 ===
 
-title: Scene_Laundry
+title: Scene_TownTripConfirm
 ---
-阿蘭: （今天先不去。）
-<<go_to_location 0>>
+阿蘭: （出門要走半小時，來回一個時辰，要去嗎？）
+
+-> 出發
+    <<jump Scene_Road_ToTown>>
+-> 不去了
+    <<jump Scene_Outside_Menu>>
 ===
 
-title: Scene_Market
+title: Scene_Road_ToTown
 ---
-<<open_shop>>
+<<advance_time_minutes 30>>
+<<bg road>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>出了三合院，走上往街上的路。路旁的田埂還有露水，風吹過來帶著稻香。</i>
+阿蘭: （難得出來走走，眼睛也開闊了一點。）
+
+-> 順手撿些柴帶著
+    阿蘭: （空手是浪費。）
+    <<adjust_item "firewood" 2>>
+    : <i>撿了兩把枯枝綁好，順手提著。</i>
+    <<jump Scene_TownMenu>>
+-> 直接走，不耽誤時間
+    <<jump Scene_TownMenu>>
+===
+
+title: Scene_TownMenu
+---
+阿蘭: （到了街上，要去哪裡咧？）
+
+-> 去洗衫窟 <<if not has_flag("laundry_done")>>
+    <<jump Scene_Laundry>>
+-> 去第一市場
+    <<open_market_ui>>
+-> 下街逛逛（順路撿資訊） <<if not has_flag("town_looked_around")>>
+    <<advance_time_minutes 10>>
+    : <i>她在街上走了一圈，聽了些消息。</i>
+    <<set_flag "town_looked_around">>
+    <<adjust_stat "mood" 3>>
+    <<jump Scene_TownMenu>>
+-> 回家了
+    <<jump Scene_Road_Home>>
+===
+
+title: Scene_Road_Home
+---
+<<advance_time_minutes 30>>
+<<bg road>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>往回走，三合院的屋頂慢慢出現在前面。</i>
+阿蘭: （出來一趟，不知道家裡現在怎樣了。）
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_Laundry
+---
+<<bg lake>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>蹲在水邊，把衣服一件一件浸進水裡，搓洗、擰乾。</i>
+阿蘭: （洗一洗，也算是歇口氣。）
+
+<<advance_time_minutes 30>>
+<<set_flag "laundry_done">>
+<<adjust_stat "mood" 3>>
+<<jump Scene_TownMenu>>
 ===
 
 title: Scene_LunchDelivery
