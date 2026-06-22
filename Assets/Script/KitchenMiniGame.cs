@@ -50,6 +50,7 @@ public class KitchenMiniGame : MonoBehaviour
     [SerializeField] private bool isAddingFire = false; // 是否正在執行加柴動畫（防止連點）
     [SerializeField] private bool hasServed = false;     // 是否已經盛飯
     [SerializeField] private bool hasStoppedFire = false; // 這一輪是否已經按過熄火
+    [SerializeField] private bool isCooked = false;      // 飯是否已經煮好但尚未盛出，跟「火有沒有熄」分開追蹤，避免熄火後沒辦法盛飯
     [SerializeField] private bool lastCookWasDinner = false; // 這一輪煮的是早飯還是晚飯
 
     private CanvasGroup lightFireCG; // 點火按鈕的透明度控制
@@ -175,6 +176,7 @@ public class KitchenMiniGame : MonoBehaviour
                 {
                     cookProgress = 100f;
                     state = KitchenState.Done;
+                    isCooked = true;
                     StartFireTimer();
                 }
                 break;
@@ -188,7 +190,19 @@ public class KitchenMiniGame : MonoBehaviour
     public static bool IsFoodDone()
     {
         if (Instance == null) return false;
-        return Instance.state == KitchenState.Done;
+        return Instance.isCooked;
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本／其他系統檢查：飯是否已經在灶房盛出（裝進碗裡，等著端去廳堂）。
+    /// 跟 is_food_done() 分開：盛飯的瞬間 isCooked 就會變 false（鍋已經空了），
+    /// 但這時候飯其實已經盛好、只是還沒端去廳堂，不能再用 is_food_done() 判斷。
+    /// </summary>
+    [YarnFunction("is_food_served")]
+    public static bool IsFoodServed()
+    {
+        if (Instance == null) return false;
+        return Instance.hasServed;
     }
 
     /// <summary>
@@ -198,7 +212,7 @@ public class KitchenMiniGame : MonoBehaviour
     public static bool IsKitchenUnfinished()
     {
         if (Instance == null) return false;
-        return Instance.state == KitchenState.Done || (Instance.hasStoppedFire && !Instance.hasServed);
+        return Instance.isCooked && !Instance.hasServed;
     }
 
     /// <summary>
@@ -244,6 +258,10 @@ public class KitchenMiniGame : MonoBehaviour
                             ? "今天的晚飯已經煮過了，明天再來吧。"
                             : "今天早上的飯已經煮過了，晚上再來煮晚飯吧。";
                     }
+                    else if (isCooked && !hasServed)
+                    {
+                        statusText.text = "飯煮好了，記得盛飯";
+                    }
                     else
                     {
                         statusText.text = "火熄了，重新點火";
@@ -253,9 +271,9 @@ public class KitchenMiniGame : MonoBehaviour
             }
         }
 
-        // 更新點火按鈕可用性（僅在未點火或已熄滅時可用；這一輪已經盛飯+熄火，且還是同一餐時段就不能再點）
+        // 更新點火按鈕可用性（僅在未點火或已熄滅時可用；煮好但還沒盛飯，或這一輪已經盛飯+熄火且還是同一餐時段，都不能再點）
         bool isDinnerNow = TimeManager.IsTimeAfter(17, 0);
-        bool blockRelight = hasStoppedFire && hasServed && isDinnerNow == lastCookWasDinner;
+        bool blockRelight = (isCooked && !hasServed) || (hasStoppedFire && hasServed && isDinnerNow == lastCookWasDinner);
         bool lightFireInteractable = (state == KitchenState.Unlit || state == KitchenState.Extinguished) && !blockRelight;
         SetButtonState(lightFireButton, lightFireCG, lightFireInteractable);
 
@@ -263,10 +281,10 @@ public class KitchenMiniGame : MonoBehaviour
         bool addWoodInteractable = (state == KitchenState.Warming || state == KitchenState.Cooking) && !isAddingFire;
         SetButtonState(addWoodButton, addWoodCG, addWoodInteractable);
 
-        // 更新盛飯按鈕顯示狀態：煮好且尚未盛過才顯示
+        // 更新盛飯按鈕顯示狀態：煮好且尚未盛過才顯示（跟火有沒有熄無關，熄火後依然能盛飯）
         if (serveFoodButton != null)
         {
-            serveFoodButton.gameObject.SetActive(state == KitchenState.Done && !hasServed);
+            serveFoodButton.gameObject.SetActive(isCooked && !hasServed);
         }
 
         // 本爐火焰圖：有火（暖火/烹煮/已完成）時顯示
@@ -306,6 +324,9 @@ public class KitchenMiniGame : MonoBehaviour
     {
         bool isDinnerNow = TimeManager.IsTimeAfter(17, 0);
 
+        // 飯已經煮好但還沒盛出，先不能重新點火，否則會把煮好的飯蓋掉
+        if (isCooked && !hasServed) return;
+
         // 這一輪已經盛飯+熄火，且還是同一個時段（早飯/晚飯），先不能重新點火
         if (hasStoppedFire && hasServed && isDinnerNow == lastCookWasDinner) return;
 
@@ -320,6 +341,7 @@ public class KitchenMiniGame : MonoBehaviour
             // 開始新一輪煮飯，重置上一輪的盛飯／熄火紀錄，並記錄這輪煮的是哪一餐
             hasServed = false;
             hasStoppedFire = false;
+            isCooked = false;
             lastCookWasDinner = isDinnerNow;
 
             StartCoroutine(RaiseFireCoroutine(20f)); // 觸發火力進一步上升
@@ -398,6 +420,7 @@ public class KitchenMiniGame : MonoBehaviour
     public void OnClickServeFood()
     {
         hasServed = true;
+        isCooked = false;
 
         if (kitchenGame != null)
         {

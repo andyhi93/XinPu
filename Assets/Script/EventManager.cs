@@ -63,6 +63,9 @@ public class EventManager : MonoBehaviour
         "chicken_fed",
         "pig_fed",
         "eggs_collected",
+        "pig_food_leaf_consumed",
+        "morning_late",
+        "afternoon_hall_visited",
     };
 
     private Dictionary<string, bool> flags = new Dictionary<string, bool>();
@@ -369,6 +372,51 @@ public class EventManager : MonoBehaviour
     {
         return Instance != null && Instance.flags.TryGetValue(key, out bool value) && value;
     }
+
+    // --- 除錯用：在 Inspector 右鍵點 EventManager 元件，可以直接點下面這些選單項目，
+    // 不用每次測試都重新跑一輪小遊戲／劇情。注意：這裡只會設定 EventManager 的旗標，
+    // 不會動到 KitchenMiniGame／PigFoodMiniGame 自己的內部狀態（isCooked、hasCollected 等），
+    // 如果之後還要回去那些小遊戲本身，狀態可能跟旗標不一致。
+
+    [ContextMenu("除錯/早飯已送達 (breakfast_delivered)")]
+    private void Debug_SetBreakfastDelivered() => SetFlag("breakfast_delivered");
+
+    [ContextMenu("除錯/午飯已送達 (lunch_delivered)")]
+    private void Debug_SetLunchDelivered() => SetFlag("lunch_delivered");
+
+    [ContextMenu("除錯/晚飯已送達 (dinner_delivered)")]
+    private void Debug_SetDinnerDelivered() => SetFlag("dinner_delivered");
+
+    [ContextMenu("除錯/水已燒好 (water_boiled_today)")]
+    private void Debug_SetWaterBoiled() => SetFlag("water_boiled_today");
+
+    [ContextMenu("除錯/雞已放出並餵食 (chicken_released + chicken_fed)")]
+    private void Debug_SetChickenFed()
+    {
+        SetFlag("chicken_released");
+        SetFlag("chicken_fed");
+    }
+
+    [ContextMenu("除錯/蛋已收 (eggs_collected)")]
+    private void Debug_SetEggsCollected() => SetFlag("eggs_collected");
+
+    [ContextMenu("除錯/豬已餵食 (pig_fed)")]
+    private void Debug_SetPigFed() => SetFlag("pig_fed");
+
+    [ContextMenu("除錯/地瓜葉已用 (pig_food_leaf_consumed)")]
+    private void Debug_SetPigFoodLeafConsumed() => SetFlag("pig_food_leaf_consumed");
+
+    [ContextMenu("除錯/今天所有日常事項都完成")]
+    private void Debug_CompleteAllDailyFlags()
+    {
+        foreach (string key in FixedFlags)
+        {
+            SetFlag(key);
+        }
+    }
+
+    [ContextMenu("除錯/重置今天所有日常旗標")]
+    private void Debug_ResetAllDailyFlags() => ResetFixedFlags();
 
     // --- 供 KitchenMenu 呼叫：記錄煮飯的食材選擇與好感度結果 ---
 

@@ -64,7 +64,8 @@ public class ResourceManager : MonoBehaviour
         { "cloth", 0 },
         { "medicine", 0 },
         { "pickledVeg", 0 },
-        { "persimmon", 0 }
+        { "persimmon", 0 },
+        { "sweetPotatoLeaves", 4 }
     };
 
     private void Awake()

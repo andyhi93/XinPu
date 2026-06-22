@@ -31,6 +31,7 @@ public class PigFoodMiniGame : MonoBehaviour
     [Header("設定")]
     [SerializeField] private int chopRequired = 5;        // 需要剁幾下，預設 5
     [SerializeField] private float cookDuration = 30f;    // 煮豬菜需要幾秒
+    [SerializeField] private float fireBoostPerClick = 0.5f; // 加柴每次點擊增加的火力與燃料量（0~1 尺度）
 
     [Header("狀態變數")]
     [SerializeField] private int chopCount = 0;
@@ -38,6 +39,7 @@ public class PigFoodMiniGame : MonoBehaviour
     [SerializeField] private bool isCooking = false;
     [SerializeField] private bool isDone = false;
     [SerializeField] private bool hasCollected = false;   // 是否已盛出豬菜
+    [SerializeField] private bool hasStoppedFire = false; // 是否已經按過熄火
     [SerializeField] private float cookProgress = 0f;
     [SerializeField] private float fireLevel = 0f;
     [SerializeField] private float fuelLevel = 0f;
@@ -129,34 +131,32 @@ public class PigFoodMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// 點火按鈕點擊事件
+    /// 點火按鈕點擊事件：只有「還沒點火」時才能點，火已經點著或豬菜已經煮好都不能再按
+    /// （跟加柴是兩個不同的動作）。點下去直接點燃（火力／燃料不會隨時間下降，降低玩家負擔），
+    /// 之後可以用加柴把火力補到最大，煮得更快。
     /// </summary>
     public void OnClickFire()
     {
-        if (!isAtStove) return;
-        
-        fireLevel = Mathf.Min(1.0f, fireLevel + 0.5f);
-        fuelLevel = Mathf.Min(1.0f, fuelLevel + 0.5f);
+        if (!isAtStove || isCooking || isDone) return;
 
-        if (fireLevel >= 1.0f)
-        {
-            isCooking = true;
-        }
+        fireLevel = fireBoostPerClick;
+        fuelLevel = fireBoostPerClick;
+        isCooking = true;
 
-        EventManager.SetFlag("pigfood_fire_lit", fireLevel > 0);
+        EventManager.SetFlag("pigfood_fire_lit", true);
         UpdateUI();
     }
 
     /// <summary>
-    /// 加柴按鈕點擊事件
+    /// 加柴按鈕點擊事件：只有「火已經點著、還在燒」時才能加柴，沒點火或已經煮好都不能按
+    /// （跟點火是兩個不同的動作，邏輯參考 KitchenMiniGame 的 OnClickAddWood）
     /// </summary>
     public void OnClickAddWood()
     {
-        if (!isAtStove) return;
-        Debug.Log("【豬菜小遊戲】加柴！燃料與火力補滿。");
-        fireLevel = 1.0f;
-        fuelLevel = 1.0f;
-        isCooking = true;
+        if (!isAtStove || !isCooking || isDone) return;
+
+        fireLevel = Mathf.Min(1.0f, fireLevel + fireBoostPerClick);
+        fuelLevel = Mathf.Min(1.0f, fuelLevel + fireBoostPerClick);
 
         EventManager.SetFlag("pigfood_fire_lit", true);
         UpdateUI();
@@ -164,32 +164,36 @@ public class PigFoodMiniGame : MonoBehaviour
 
     private void Update()
     {
-        // 不論是否還在烹煮，都要持續檢查著火計時器
+        // 不論視窗是否開啟，都要持續檢查著火計時器、累積烹煮進度
         CheckFireTimer();
+        UpdateCookProgress();
 
-        // 若非烹煮中或已完成，則不更新進度
+        // 視窗開啟時才更新 UI 表現
+        if (pigFoodGame != null && pigFoodGame.activeSelf)
+        {
+            UpdateUI();
+        }
+    }
+
+    /// <summary>
+    /// 累積烹煮進度，速率隨火力大小變化（火力／燃料不會隨時間下降，只有玩家自己選擇加柴才會變化）
+    /// </summary>
+    private void UpdateCookProgress()
+    {
         if (!isCooking || isDone) return;
 
-        // 更新烹煮進度，速率隨火力大小變化 (1.0 為正常速率)
         if (fireLevel > 0)
         {
             cookProgress += (1.0f / cookDuration) * fireLevel * Time.deltaTime;
             cookProgress = Mathf.Min(1.0f, cookProgress);
         }
 
-        bool justFinished = false;
         if (cookProgress >= 1.0f)
         {
+            cookProgress = 1.0f;
             isDone = true;
-            justFinished = true;
             StartFireTimer();
-        }
-
-        // 視窗開啟時才更新 UI 表現
-        if (pigFoodGame != null && pigFoodGame.activeSelf)
-        {
-            if (justFinished) RefreshSections();
-            UpdateUI();
+            RefreshSections(); // 確保盛菜按鈕的顯示狀態立刻更新
         }
     }
 
@@ -210,14 +214,9 @@ public class PigFoodMiniGame : MonoBehaviour
             else
             {
                 if (!isCooking)
-                {
-                    if (fireLevel > 0)
-                        messageText.text = "需要加柴";
-                    else
-                        messageText.text = "準備點火";
-                }
+                    messageText.text = "準備點火";
                 else
-                    messageText.text = isDone ? "豬菜好了" : "烹煮中";
+                    messageText.text = isDone ? "豬菜好了" : "烹煮中，加柴可以煮更快";
             }
         }
         
@@ -234,11 +233,11 @@ public class PigFoodMiniGame : MonoBehaviour
         SetButtonState(chopButton, chopButtonCG, chopCount < chopRequired && !isAtStove);
         SetButtonState(addToStoveButton, addToStoveButtonCG, chopCount >= chopRequired && !isAtStove);
         
-        // 點火按鈕：在爐灶前且火力未滿時可用
-        SetButtonState(fireButton, fireButtonCG, isAtStove && fireLevel < 1.0f);
-        
-        // 加柴按鈕：在爐灶前且火力未滿時可用
-        SetButtonState(addWoodButton, addWoodCG, isAtStove && fireLevel < 1.0f);
+        // 點火按鈕：在爐灶前、還沒點火、也還沒煮好時可用（已經煮好就不能再點火，跟煮飯一致）
+        SetButtonState(fireButton, fireButtonCG, isAtStove && !isCooking && !isDone);
+
+        // 加柴按鈕：火已經點著、還在燒、且火力未滿時可用（必須先點火才能加柴）
+        SetButtonState(addWoodButton, addWoodCG, isAtStove && isCooking && !isDone && fireLevel < 1.0f);
 
         // 本爐火焰圖：有火力時顯示
         if (pigfoodFire != null)
@@ -252,11 +251,12 @@ public class PigFoodMiniGame : MonoBehaviour
             cookFire.gameObject.SetActive(EventManager.HasFlag("kitchen_fire_lit"));
         }
 
-        // 熄火按鈕：煮好之前不能按，直接隱藏
+        // 熄火按鈕：煮好之前不能按；已經熄過火就直接隱藏，不會一直顯示
         if (stopButton != null)
         {
-            stopButton.interactable = isDone;
-            stopButton.gameObject.SetActive(isDone);
+            bool canStop = isDone && !hasStoppedFire;
+            stopButton.interactable = canStop;
+            stopButton.gameObject.SetActive(canStop);
         }
     }
 
@@ -342,6 +342,7 @@ public class PigFoodMiniGame : MonoBehaviour
         // 注意：isCooking／isDone 不重置，代表「烹煮流程已開始/已完成」，與 messageText 顯示邏輯一致
         fireLevel = 0f;
         fuelLevel = 0f;
+        hasStoppedFire = true;
 
         fireTimerActive = false;
         fireEventTriggered = false;
@@ -353,6 +354,7 @@ public class PigFoodMiniGame : MonoBehaviour
             LocationManager.Instance.SetEventDot(LocationManager.Location.灶房, false, false);
         }
 
+        RefreshSections(); // 確保熄火後盛菜按鈕的顯示狀態（isDone && !hasCollected）有重新整理
         UpdateUI();
     }
 
@@ -361,7 +363,7 @@ public class PigFoodMiniGame : MonoBehaviour
     /// </summary>
     public void OnClickStop()
     {
-        if (!isDone) return;
+        if (!isDone || hasStoppedFire) return;
 
         ExtinguishFire();
         EventManager.SetFlag("fire_extinguished", true);
@@ -385,6 +387,25 @@ public class PigFoodMiniGame : MonoBehaviour
     }
 
     /// <summary>
+    /// 跨日時呼叫：重置整輪剁菜／烹煮狀態，讓新的一天可以重新煮豬菜（跟煮飯一樣一天只能煮一次）
+    /// </summary>
+    public void ResetDailyState()
+    {
+        chopCount = 0;
+        isAtStove = false;
+        isCooking = false;
+        isDone = false;
+        hasCollected = false;
+        hasStoppedFire = false;
+        cookProgress = 0f;
+        fireLevel = 0f;
+        fuelLevel = 0f;
+
+        RefreshSections();
+        UpdateUI();
+    }
+
+    /// <summary>
     /// 供外部或 Yarn 檢查豬菜是否完成並盛出
     /// </summary>
     public bool IsPigFoodDone() => hasCollected;
@@ -393,6 +414,16 @@ public class PigFoodMiniGame : MonoBehaviour
     /// 供外部或 Yarn 檢查豬菜是否正在烹煮中（包含已完成但尚未盛出）
     /// </summary>
     public bool IsPigFoodCooking() => isCooking && !hasCollected;
+
+    /// <summary>
+    /// 供 Yarn 腳本檢查：這一輪豬菜已經盛出、火也關了（跟煮飯一樣，今天不能再進去）
+    /// </summary>
+    [YarnFunction("is_pig_food_done_for_now")]
+    public static bool IsPigFoodDoneForNow()
+    {
+        if (Instance == null) return false;
+        return Instance.hasCollected && Instance.hasStoppedFire;
+    }
 
     /// <summary>
     /// 開啟豬菜小遊戲視窗

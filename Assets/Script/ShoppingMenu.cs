@@ -57,6 +57,7 @@ public class ShoppingMenu : MonoBehaviour
         ("driedFish", "魚乾", 3,  1f),
         ("rice",      "米",   5,  1f),
         ("riceBran",  "米糠", 1,  1f),
+        ("sweetPotatoLeaves", "地瓜葉", 1, 1f),
         ("salt",      "鹽",   2,  0.6f),
         ("oil",       "油",   4,  0.6f),
         ("cloth",     "布料", 8,  0.3f),
@@ -70,8 +71,8 @@ public class ShoppingMenu : MonoBehaviour
         ("pickledVeg", "醃菜", 2),
     };
 
-    // 米油鹽米糠每買一份算 3 天份，其他物品買一份就是一個
-    private static readonly HashSet<string> ThreeDayItems = new() { "rice", "oil", "salt", "riceBran" };
+    // 米油鹽米糠地瓜葉每買一份算 3 天份，其他物品買一份就是一個
+    private static readonly HashSet<string> ThreeDayItems = new() { "rice", "oil", "salt", "riceBran", "sweetPotatoLeaves" };
 
     // 今天決定要上架的種類（只記種類，不含執行期的 selectedAmount）
     private List<(string key, string name, int price)> todaysMarketRoll;

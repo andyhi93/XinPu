@@ -113,6 +113,11 @@ public class TimeManager : MonoBehaviour
             KitchenMiniGame.Instance.ResetDailyState(); // 讓新的一天可以重新煮早飯
         }
 
+        if (PigFoodMiniGame.Instance != null)
+        {
+            PigFoodMiniGame.Instance.ResetDailyState(); // 讓新的一天可以重新煮豬菜
+        }
+
         if (ShoppingMenu.Instance != null)
         {
             ShoppingMenu.Instance.ResetDailyStock(); // 市場明天重新隨機上架
@@ -138,21 +143,20 @@ public class TimeManager : MonoBehaviour
     {
         if (!hasTriggeredMorningLate && IsTimeAfter(8, 0))
         {
-            // 檢查飯是否煮好
+            // 飯是否煮好、是否已經在灶房盛出、或是否已經端過早飯，三個都要排除才算「真的沒飯吃」：
+            // 著火事件處理完後 state 會變成 Extinguished、盛飯瞬間 isCooked 也會變 false，
+            // 若只看 is_food_done() 會把「已經盛飯／端過早飯」誤判成「沒煮飯」
             bool isFoodDone = KitchenMiniGame.IsFoodDone();
+            bool isFoodServed = KitchenMiniGame.IsFoodServed();
+            bool breakfastDelivered = EventManager.HasFlag("breakfast_delivered");
 
-            if (!isFoodDone)
+            hasTriggeredMorningLate = true;
+            if (!isFoodDone && !isFoodServed && !breakfastDelivered)
             {
-                hasTriggeredMorningLate = true;
                 if (GameManager.Instance != null)
                 {
                     GameManager.Instance.ForceStartDialogue("Scene_MorningLate");
                 }
-            }
-            else
-            {
-                // 如果已經煮好了，今天就不再檢查（直到隔天重置）
-                hasTriggeredMorningLate = true;
             }
         }
 

@@ -95,22 +95,115 @@ title: Scene_Hall
 
 <<if has_flag("breakfast_delivered")>>
     阿蘭: （早飯已經端過了。）
+    -> 跟婆婆對話 <<if has_flag("lunch_delivered") and not has_flag("afternoon_hall_visited") and is_time_after(11, 0)>>
+        <<jump Scene_AfternoonHall>>
+    -> 回屋休息等天暗 <<if has_flag("lunch_delivered") and not is_time_after(17, 0)>>
+        阿蘭: （今天不出門了，趁這個空檔歇一下。）
+        <<adjust_stat "health" 5>>
+        <<set_time "酉">>
+        <<jump Scene_FreeRoam>>
     -> 離開
         <<go_to_location 0>>
-<<elseif is_food_done()>>
+<<elseif is_food_done() or is_food_served()>>
     阿蘭: （地瓜簽粥已經煮好了。）
     -> 端飯給大家吃
         <<jump Scene_DiningHall>>
+    -> 跟婆婆對話 <<if has_flag("lunch_delivered") and not has_flag("afternoon_hall_visited") and is_time_after(11, 0)>>
+        <<jump Scene_AfternoonHall>>
+    -> 回屋休息等天暗 <<if has_flag("lunch_delivered") and not is_time_after(17, 0)>>
+        阿蘭: （今天不出門了，趁這個空檔歇一下。）
+        <<adjust_stat "health" 5>>
+        <<set_time "酉">>
+        <<jump Scene_FreeRoam>>
     -> 離開
         <<go_to_location 0>> // 0 代表三合院中心點
 <<else>>
     阿蘭: （飯還沒煮好，等下再來吧。）
+    -> 跟婆婆對話 <<if has_flag("lunch_delivered") and not has_flag("afternoon_hall_visited") and is_time_after(11, 0)>>
+        <<jump Scene_AfternoonHall>>
+    -> 回屋休息等天暗 <<if has_flag("lunch_delivered") and not is_time_after(17, 0)>>
+        阿蘭: （今天不出門了，趁這個空檔歇一下。）
+        <<adjust_stat "health" 5>>
+        <<set_time "酉">>
+        <<jump Scene_FreeRoam>>
     -> 離開
         <<go_to_location 0>>
 <<endif>>
+===
 
--> 回屋休息等天暗 <<if has_flag("lunch_delivered") and is_time_after(13, 0) and not is_time_after(17, 0)>>
-    阿蘭: （今天不出門了，趁這個空檔歇一下。）
+title: Scene_AfternoonHall
+---
+<<set_flag "afternoon_hall_visited">>
+<<bg hall>>
+<<show mother true>>
+<<teleport mother -300>>
+<<dim Lan>>
+<<light mother>>
+
+: <i>廳堂裡，婆婆坐在燈下縫著什麼。</i>
+<<dim mother>>
+<<light Lan>>
+阿蘭: 阿婆，便當送過去了。
+<<dim Lan>>
+<<light mother>>
+
+<<if has_flag("morning_late")>>
+    婆婆: 嗯。今天灶火那件事，你自己心裡有數咧。
+    <<dim mother>>
+    <<light Lan>>
+    阿蘭: （她沒有再說什麼，但意思我明白。）
+    <<dim Lan>>
+    <<light mother>>
+    婆婆: 下午就在家裡顧好，哪裡都不要去。
+    <<dim mother>>
+    <<light Lan>>
+    阿蘭: 是，阿婆。
+    阿蘭: （今天出不了門了。）
+    <<show mother false>>
+    <<jump AfternoonHall_StayHome>>
+<<else>>
+    婆婆: 嗯，辛苦了。下午你要去哪裡嗎？
+    <<dim mother>>
+    <<light Lan>>
+    阿蘭: （婆婆今天心情還好，問我要不要出門。）
+    <<dim Lan>>
+    -> 想去市場採買 <<if not is_time_after(15, 0)>>
+        <<light Lan>>
+        阿蘭: 阿婆，我想去街上買點東西，順路也去洗衫窟。
+        <<dim Lan>>
+        <<light mother>>
+        婆婆: 去吧，天暗前要回來咧。
+        <<dim mother>>
+        <<light Lan>>
+        阿蘭: 知咧，阿婆。
+        <<show mother false>>
+        <<jump Scene_Outside_Menu>>
+    -> 想去市場採買（太晚了） <<if is_time_after(15, 0)>>
+        <<light Lan>>
+        阿蘭: （都快三點了，出去來不及了。）
+        <<show mother false>>
+        <<jump AfternoonHall_StayHome>>
+    -> 在家休息就好
+        <<light Lan>>
+        阿蘭: 不去了，在家裡顧著就好。
+        <<dim Lan>>
+        <<light mother>>
+        婆婆: 也好，曬場那邊你多看著點。
+        <<dim mother>>
+        <<show mother false>>
+        <<jump AfternoonHall_StayHome>>
+<<endif>>
+===
+
+title: AfternoonHall_StayHome
+---
+<<light Lan>>
+阿蘭: （下午就在家裡了。）
+
+-> 繼續做事
+    <<jump Scene_FreeRoam>>
+-> 等天暗（跳到酉時）
+    阿蘭: （今天就這樣，等天暗再說。）
     <<adjust_stat "health" 5>>
     <<set_time "酉">>
     <<jump Scene_FreeRoam>>
@@ -481,44 +574,88 @@ title: Scene_KitchenMenu
 <<if is_kitchen_unfinished()>>
     -> 煮飯（好像有事情還沒做）
         <<open_kitchen>>
-    -> 煮豬菜
+    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0>>
+        <<jump Scene_CookPigFood>>
+    -> 煮豬菜（繼續處理） <<if not is_pig_food_done_for_now() and has_flag("pig_food_leaf_consumed")>>
         <<open_pig_food>>
+    -> 煮豬菜（沒有地瓜葉） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") <= 0>>
+        阿蘭: （地瓜葉沒了，要先去摘一些或去市場買才能煮豬菜。）
+        <<jump Scene_FreeRoam>>
+    -> 煮豬菜（今天已經煮過了） <<if is_pig_food_done_for_now()>>
+        阿蘭: （今天的豬菜已經煮好餵過了，明天再煮吧。）
+        <<jump Scene_FreeRoam>>
     -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         <<jump Scene_BoilWater>>
     -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
+        <<jump Scene_FreeRoam>>
     -> 挑水 <<if get_item("water") <= 1>>
         <<jump Scene_FetchWater>>
     -> 離開
         <<go_to_location 0>>
+        <<jump Scene_FreeRoam>>
 <<elseif is_kitchen_done_for_now() and not is_time_after(17, 0)>>
     -> 煮飯（今天煮過早飯了，晚上再來）
         阿蘭: （今天早上的飯已經煮過了，晚上再來煮晚飯吧。）
         <<go_to_location 0>>
-    -> 煮豬菜
+        <<jump Scene_FreeRoam>>
+    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0>>
+        <<jump Scene_CookPigFood>>
+    -> 煮豬菜（繼續處理） <<if not is_pig_food_done_for_now() and has_flag("pig_food_leaf_consumed")>>
         <<open_pig_food>>
+    -> 煮豬菜（沒有地瓜葉） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") <= 0>>
+        阿蘭: （地瓜葉沒了，要先去摘一些或去市場買才能煮豬菜。）
+        <<jump Scene_FreeRoam>>
+    -> 煮豬菜（今天已經煮過了） <<if is_pig_food_done_for_now()>>
+        阿蘭: （今天的豬菜已經煮好餵過了，明天再煮吧。）
+        <<jump Scene_FreeRoam>>
     -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         <<jump Scene_BoilWater>>
     -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
+        <<jump Scene_FreeRoam>>
     -> 挑水 <<if get_item("water") <= 1>>
         <<jump Scene_FetchWater>>
     -> 離開
         <<go_to_location 0>>
+        <<jump Scene_FreeRoam>>
 <<else>>
     -> 煮飯
         <<open_kitchen>>
-    -> 煮豬菜
+    -> 煮豬菜 <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") > 0>>
+        <<jump Scene_CookPigFood>>
+    -> 煮豬菜（繼續處理） <<if not is_pig_food_done_for_now() and has_flag("pig_food_leaf_consumed")>>
         <<open_pig_food>>
+    -> 煮豬菜（沒有地瓜葉） <<if not is_pig_food_done_for_now() and not has_flag("pig_food_leaf_consumed") and get_item("sweetPotatoLeaves") <= 0>>
+        阿蘭: （地瓜葉沒了，要先去摘一些或去市場買才能煮豬菜。）
+        <<jump Scene_FreeRoam>>
+    -> 煮豬菜（今天已經煮過了） <<if is_pig_food_done_for_now()>>
+        阿蘭: （今天的豬菜已經煮好餵過了，明天再煮吧。）
+        <<jump Scene_FreeRoam>>
     -> 燒水 <<if get_item("water") > 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         <<jump Scene_BoilWater>>
     -> 燒水（沒有水） <<if get_item("water") <= 0 and is_time_after(17, 0) and not has_flag("water_boiled_today")>>
         阿蘭: （還沒去挑水咧，要先去井裡挑一桶才能燒水。）
+        <<jump Scene_FreeRoam>>
     -> 挑水 <<if get_item("water") <= 1>>
         <<jump Scene_FetchWater>>
     -> 離開
         <<go_to_location 0>>
+        <<jump Scene_FreeRoam>>
 <<endif>>
+===
+
+title: Scene_CookPigFood
+---
+阿蘭: （煮豬菜要用 1 份地瓜葉，確定要煮嗎？）
+
+-> 煮，去剁菜
+    <<adjust_item "sweetPotatoLeaves" -1>>
+    <<set_flag "pig_food_leaf_consumed">>
+    <<open_pig_food>>
+-> 先不煮，地瓜葉還是要省
+    阿蘭: （再等等好了。）
+    <<jump Scene_FreeRoam>>
 ===
 
 title: Scene_FetchWater
@@ -640,6 +777,7 @@ title: PigPen_Loop
 
 title: Scene_MorningLate
 ---
+<<set_flag "morning_late">>
 <<bg kitchen>>
 <<show mother true>>
 <<teleport mother -300>>
@@ -732,10 +870,19 @@ title: Scene_Outside_Menu
 -> 送便當去田邊（今天已經送過了） <<if has_flag("lunch_delivered")>>
     阿蘭: （今天已經送過便當了，不用再送一次。）
     <<jump Scene_Outside_Menu>>
--> 去洗衫窟
-    <<jump Scene_Laundry>>
--> 去第一市場
+-> 去第一市場 <<if has_flag("afternoon_hall_visited") and not has_flag("morning_late") and not is_time_after(15, 0)>>
     <<jump Scene_Market>>
+-> 去洗衫窟 <<if has_flag("afternoon_hall_visited") and not has_flag("morning_late") and not is_time_after(15, 0)>>
+    <<jump Scene_Laundry>>
+-> 出去走走（還沒問過婆婆） <<if not has_flag("afternoon_hall_visited")>>
+    阿蘭: （還沒問過婆婆，不確定能不能出去走走，先回廳堂問問看。）
+    <<jump Scene_Outside_Menu>>
+-> 出去走走（婆婆不准） <<if has_flag("afternoon_hall_visited") and has_flag("morning_late")>>
+    阿蘭: （婆婆說了，今天哪裡都不要去。）
+    <<jump Scene_Outside_Menu>>
+-> 出去走走（太晚了） <<if has_flag("afternoon_hall_visited") and not has_flag("morning_late") and is_time_after(15, 0)>>
+    阿蘭: （都這麼晚了，出去也來不及了。）
+    <<jump Scene_Outside_Menu>>
 -> 先不出去
     <<go_to_location 0>>
 ===
@@ -799,8 +946,10 @@ title: LunchDelivery_Loop
 -> 順手摘一把地瓜葉 <<if not $leaves_picked>>
     阿蘭: （空手回去是浪費，摘一點回去加菜。）
     <<set $leaves_picked = true>>
+    <<adjust_item "sweetPotatoLeaves" 3>>
     <<advance_time_minutes 10>>
     : <i>花了點時間，摘了一把地瓜葉。</i>
+    : <i>地瓜葉 +3</i>
     <<jump LunchDelivery_Loop>>
 -> 等丈夫吃完，把剩的吃一下 <<if not $ate_lunch>>
     : <i>他放下碗，她才把剩下的扒完。涼了，但是飯。</i>
@@ -1156,4 +1305,5 @@ title: Scene_FinalSettlement
 : <i>明天又是新的一天。</i>
 
 <<trigger_ending>>
+<<jump Scene_FreeRoam>>
 ===

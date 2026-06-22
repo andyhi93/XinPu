@@ -88,9 +88,23 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private bool pendingFreeRoamRecovery = false; // 見 OnDialogueComplete() 的說明：不能在事件處理常式裡直接重啟對話
+
     private void Update()
     {
         UpdateBreakfastEventDot();
+
+        if (pendingFreeRoamRecovery)
+        {
+            pendingFreeRoamRecovery = false;
+
+            // 延到這裡才真正觸發，並重新確認狀態還是「卡在 Dialogue、但其實沒有對話在跑」，
+            // 避免覆蓋掉這一幀內可能由別的系統（例如隨機事件）合法啟動的新對話。
+            if (currentState == GameState.Dialogue && dialogueRunner != null && !dialogueRunner.IsDialogueRunning)
+            {
+                ForceStartDialogue("Scene_FreeRoam");
+            }
+        }
     }
 
     /// <summary>
@@ -101,7 +115,7 @@ public class GameManager : MonoBehaviour
     {
         if (LocationManager.Instance == null) return;
 
-        bool shouldShow = KitchenMiniGame.IsFoodDone() && !EventManager.HasFlag("breakfast_delivered");
+        bool shouldShow = (KitchenMiniGame.IsFoodDone() || KitchenMiniGame.IsFoodServed()) && !EventManager.HasFlag("breakfast_delivered");
         bool isCritical = TimeManager.IsTimeAfter(8, 30);
         LocationManager.Instance.SetEventDot(diningHallLocation, shouldShow, isCritical);
     }
@@ -302,13 +316,22 @@ public class GameManager : MonoBehaviour
 
     private void OnDialogueComplete()
     {
+        dialogueRunner.onDialogueComplete.RemoveListener(OnDialogueComplete);
+
         // 對話中如果有指令（例如 open_kitchen）已經把狀態切到別的模式（如 Minigame），
         // 這裡就不該再蓋回 FreeRoam，只有「還停留在 Dialogue」時才需要自動恢復。
+        //
+        // 防呆：如果劇情節點忘記寫 <<jump Scene_FreeRoam>> 就結束了，這裡自動補跑一次，
+        // 避免畫面卡在半路（背景／角色顯示／傳送位置停留在最後一個場景）。
+        //
+        // 注意：不能在這個事件處理常式裡直接呼叫 ForceStartDialogue／StartDialogue——
+        // 這是對 DialogueRunner 的重入呼叫（它自己的 onDialogueComplete 還沒處理完，
+        // 內部還在收尾），實測會讓新對話卡死、畫面完全沒反應。改成設一個旗標，
+        // 延到下一次 Update() 才真正觸發，讓 DialogueRunner 有機會先把這一輪收尾完。
         if (currentState == GameState.Dialogue)
         {
-            SetGameState(GameState.FreeRoam);
+            pendingFreeRoamRecovery = true;
         }
-        dialogueRunner.onDialogueComplete.RemoveListener(OnDialogueComplete);
     }
 
     /// <summary>
