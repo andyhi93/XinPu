@@ -228,6 +228,9 @@ public class PersimmonMiniGame : MonoBehaviour
 
     private void OnNextClick()
     {
+        // 點下「下一顆」代表這一顆已經剝皮+去蒂完成，計入完成數量
+        ResourceManager.AdjustItem("persimmon", 1);
+
         if (currentPersimmonIndex >= dailyTarget)
         {
             isGameComplete = true;

@@ -26,6 +26,19 @@ public class TimeManager : MonoBehaviour
     private bool pendingNoWaterWarning = false;   // 是否已達 3 天門檻，等隔天早上觸發
     private bool hasTriggeredNoWaterWarning = false; // 今天是否已經觸發過提醒（避免重複）
 
+    private int consecutiveDaysWithoutFeedingPig = 0;     // 連續幾天沒餵豬
+    private bool pendingPigEscapeEvent = false;            // 是否已達 2 天門檻，等隔天卯時觸發
+    private bool hasTriggeredPigEscapeEvent = false;       // 今天是否已經觸發過豬跑出去事件
+
+    private int consecutiveDaysWithoutFeedingChicken = 0;  // 連續幾天沒餵雞
+    private bool pendingChickenEscapeEvent = false;         // 是否已達 2 天門檻，等隔天卯時觸發
+    private bool hasTriggeredChickenEscapeEvent = false;    // 今天是否已經觸發過雞跑出去事件
+
+    private bool hasTriggeredSatisfactionCheck = false;    // 11:00 家畜滿足度判定是否已執行過
+    private bool hasTriggeredSettlement = false;           // 今天 21:00 結算是否已觸發過
+
+    private int dayNumber = 1; // Demo 共三天，第三天 21:00 觸發最終結算
+
     // 十二地支映射
     private readonly string[] earthlyBranches = {
         "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"
@@ -80,9 +93,20 @@ public class TimeManager : MonoBehaviour
     /// </summary>
     private void HandleDayRollover()
     {
+        dayNumber++;
+
         hasTriggeredMorningLate = false;
         hasTriggeredDinnerLate = false;
         hasTriggeredNoWaterWarning = false;
+        hasTriggeredPigEscapeEvent = false;
+        hasTriggeredChickenEscapeEvent = false;
+        hasTriggeredSatisfactionCheck = false;
+        hasTriggeredSettlement = false;
+
+        if (ResourceManager.Instance != null)
+        {
+            ResourceManager.Instance.ResetDailyIncomeExpense(); // 每日收支歸零，供 Scene_DailySettlement 顯示
+        }
 
         if (KitchenMiniGame.Instance != null)
         {
@@ -107,7 +131,7 @@ public class TimeManager : MonoBehaviour
             }
         }
 
-        EventManager.ResetFixedFlags(); // 重置 breakfast_delivered／lunch_delivered／water_boiled_today 等每日旗標
+        EventManager.ResetFixedFlags(); // 重置 breakfast_delivered／lunch_delivered／water_boiled_today／chicken_fed／pig_fed 等每日旗標
     }
 
     private void CheckForTimeEvents()
@@ -154,6 +178,73 @@ public class TimeManager : MonoBehaviour
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.ForceStartDialogue("Scene_NoWaterWarning");
+            }
+        }
+
+        // 家畜滿足度：每天 11:00 判定，沒餵分別扣 -10，連續兩天沒餵才在隔天卯時觸發跑出去事件
+        if (!hasTriggeredSatisfactionCheck && IsTimeAfter(11, 0))
+        {
+            hasTriggeredSatisfactionCheck = true;
+
+            if (EventManager.HasFlag("pig_fed"))
+            {
+                consecutiveDaysWithoutFeedingPig = 0;
+            }
+            else
+            {
+                consecutiveDaysWithoutFeedingPig++;
+                ResourceManager.AdjustStat("pigSatisfaction", -10f);
+                if (consecutiveDaysWithoutFeedingPig >= 2)
+                {
+                    pendingPigEscapeEvent = true;
+                }
+            }
+
+            if (EventManager.HasFlag("chicken_fed"))
+            {
+                consecutiveDaysWithoutFeedingChicken = 0;
+            }
+            else
+            {
+                consecutiveDaysWithoutFeedingChicken++;
+                ResourceManager.AdjustStat("chickenSatisfaction", -10f);
+                if (consecutiveDaysWithoutFeedingChicken >= 2)
+                {
+                    pendingChickenEscapeEvent = true;
+                }
+            }
+        }
+
+        // 注意：上限 11:00 是為了避免「剛在當天 11 點判定出 pending」就在同一刻被當成隔天卯時觸發；
+        // 兩個檢查同屬一次 CheckForTimeEvents()，當天 11:00 那一刻 IsTimeAfter(11,0) 已成立，正好把它擋住，
+        // 直到隔天卯時（5:00~10:59 的窗口）才會真正觸發。
+        if (!hasTriggeredPigEscapeEvent && pendingPigEscapeEvent && IsTimeAfter(5, 0) && !IsTimeAfter(11, 0))
+        {
+            hasTriggeredPigEscapeEvent = true;
+            pendingPigEscapeEvent = false;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ForceStartDialogue("Scene_AnimalEscape");
+            }
+        }
+
+        if (!hasTriggeredChickenEscapeEvent && pendingChickenEscapeEvent && IsTimeAfter(5, 0) && !IsTimeAfter(11, 0))
+        {
+            hasTriggeredChickenEscapeEvent = true;
+            pendingChickenEscapeEvent = false;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ForceStartDialogue("Scene_ChickenEscape");
+            }
+        }
+
+        // 每天 21:00（亥時）結算：第三天觸發最終結算，其餘觸發每日小結算
+        if (!hasTriggeredSettlement && IsTimeAfter(21, 0))
+        {
+            hasTriggeredSettlement = true;
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ForceStartDialogue(dayNumber < 3 ? "Scene_DailySettlement" : "Scene_FinalSettlement");
             }
         }
     }
@@ -312,6 +403,18 @@ public class TimeManager : MonoBehaviour
         }
 
         Instance.UpdateBranchIndex(forceNotify: true);
+    }
+
+    /// <summary>
+    /// 結算用：手動跨到隔天卯時（會觸發一次 HandleDayRollover 的每日重置，
+    /// 不等待 Update() 自然跨過 24:00，因為結算發生在 21:00，時間是往「回」跳的）。
+    /// </summary>
+    [YarnCommand("advance_to_next_day")]
+    public static void AdvanceToNextDay()
+    {
+        if (Instance == null) return;
+        Instance.HandleDayRollover();
+        SetTime("卯");
     }
 
     /// <summary>

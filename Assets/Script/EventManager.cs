@@ -59,6 +59,10 @@ public class EventManager : MonoBehaviour
         "lunch_delivered",
         "water_boiled_today",
         "dinner_delivered",
+        "chicken_released",
+        "chicken_fed",
+        "pig_fed",
+        "eggs_collected",
     };
 
     private Dictionary<string, bool> flags = new Dictionary<string, bool>();

@@ -108,6 +108,12 @@ title: Scene_Hall
     -> 離開
         <<go_to_location 0>>
 <<endif>>
+
+-> 回屋休息等天暗 <<if has_flag("lunch_delivered") and is_time_after(13, 0) and not is_time_after(17, 0)>>
+    阿蘭: （今天不出門了，趁這個空檔歇一下。）
+    <<adjust_stat "health" 5>>
+    <<set_time "酉">>
+    <<jump Scene_FreeRoam>>
 ===
 
 title: Scene_DiningHall
@@ -587,41 +593,46 @@ title: Scene_NoWaterWarning
 
 title: Scene_PigPen
 ---
-<<declare $chicken_released = false>>
-<<declare $chicken_fed = false>>
-<<declare $pig_fed = false>>
 <<jump PigPen_Loop>>
 ===
 
 title: PigPen_Loop
 ---
-<<if $chicken_fed and $pig_fed>>
+<<if has_flag("chicken_fed") and has_flag("pig_fed") and has_flag("eggs_collected")>>
     阿蘭: （事情暫時做完了，晚點再來顧。）
 <<else>>
     阿蘭: （豬欄這邊有幾件事。）
 <<endif>>
 
--> 放雞出來 <<if not $chicken_released>>
+-> 放雞出來 <<if not has_flag("chicken_released")>>
     : <i>打開雞舍的門，雞撲撲地跑出來。</i>
-    <<set $chicken_released = true>>
+    <<set_flag "chicken_released">>
     <<jump PigPen_Loop>>
--> 灑穀物 <<if $chicken_released and not $chicken_fed>>
-    : <i>抓了一把穀物灑出去，雞搶著啄食。</i>
-    <<set $chicken_fed = true>>
+-> 灑穀物 <<if has_flag("chicken_released") and not has_flag("chicken_fed") and get_item("riceBran") > 0>>
+    : <i>抓了一把米糠灑出去，雞搶著啄食。</i>
+    <<adjust_item "riceBran" -1>>
+    <<set_flag "chicken_fed">>
+    <<adjust_stat "chickenSatisfaction" 10>>
     <<jump PigPen_Loop>>
--> 灑穀物（還沒放雞）<<if not $chicken_released>>
+-> 灑穀物（沒有米糠） <<if has_flag("chicken_released") and not has_flag("chicken_fed") and get_item("riceBran") <= 0>>
+    阿蘭: （米糠見底了，要去市場補咧。）
+    <<jump PigPen_Loop>>
+-> 灑穀物（還沒放雞）<<if not has_flag("chicken_released")>>
     : <i>雞還關著，先把門打開。</i>
     <<jump PigPen_Loop>>
--> 餵豬 <<if is_pig_food_done() and not $pig_fed>>
+-> 去雞巢收蛋 <<if has_flag("chicken_fed") and not has_flag("eggs_collected")>>
+    : <i>走到雞巢邊，看看今天下了幾顆。</i>
+    <<collect_eggs>>
+    : <i>今天收了 {get_last_egg_count()} 顆蛋。</i>
+    <<set_flag "eggs_collected">>
+    <<jump PigPen_Loop>>
+-> 餵豬 <<if is_pig_food_done() and not has_flag("pig_fed")>>
     : <i>把豬菜倒進豬槽，豬哼哼地湊過來。</i>
-    <<set $pig_fed = true>>
-    <<adjust_stat "livestock" 10>>
+    <<set_flag "pig_fed">>
+    <<adjust_stat "pigSatisfaction" 10>>
     <<jump PigPen_Loop>>
--> 餵豬（豬菜還在煮）<<if is_pig_food_cooking() and not $pig_fed>>
-    : <i>豬菜還沒好，等一下再來。</i>
-    <<jump PigPen_Loop>>
--> 餵豬（還沒開始做）<<if not is_pig_food_cooking() and not is_pig_food_done() and not $pig_fed>>
-    : <i>還沒準備豬菜，先去灶房處理。</i>
+-> 餵豬（沒有豬菜） <<if not is_pig_food_done() and not is_pig_food_cooking() and not has_flag("pig_fed")>>
+    阿蘭: （豬菜還沒準備，牠只能等了。）
     <<jump PigPen_Loop>>
 -> 離開
     <<go_to_location 0>>
@@ -889,6 +900,140 @@ title: FireEvent_Bad
 <<jump Scene_FreeRoam>>
 ===
 
+title: Scene_AnimalEscape
+---
+<<bg courtyard>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>豬欄那邊傳來異樣的聲音——她跑過去，門是開的。</i>
+阿蘭: 不好！跑出去了！
+
+<<set $dice1 = random_range(1, 6)>>
+<<set $dice2 = random_range(1, 6)>>
+<<set $dice_total = $dice1 + $dice2>>
+
+: <i>她追出去——</i>
+: <i>擲骰：{$dice1} + {$dice2} = {$dice_total}</i>
+
+<<if $dice_total >= 8>>
+    <<jump AnimalEscape_Good>>
+<<elseif $dice_total >= 5>>
+    <<jump AnimalEscape_Mid>>
+<<else>>
+    <<jump AnimalEscape_Bad>>
+<<endif>>
+===
+
+title: AnimalEscape_Good
+---
+: <i>跑了一圈，把牠趕回來了。還好沒跑遠。</i>
+阿蘭: （嚇死我了。門要綁緊一點咧。）
+<<adjust_stat "health" -10>>
+<<adjust_stat "pigSatisfaction" -10>>
+: <i>體力 -10／家畜滿足度 -10</i>
+<<jump Scene_FreeRoam>>
+===
+
+title: AnimalEscape_Mid
+---
+: <i>追了好一段路，手腳都擦傷了，才把牠抓回來。</i>
+阿蘭: （這下子腰也痠了。）
+<<adjust_stat "health" -15>>
+<<adjust_stat "mood" -10>>
+<<adjust_stat "pigSatisfaction" -20>>
+: <i>體力 -15／心情 -10／家畜滿足度 -20</i>
+<<jump Scene_FreeRoam>>
+===
+
+title: AnimalEscape_Bad
+---
+: <i>跑太遠了，問了幾個鄰居都說沒看見。天黑了才放棄找。</i>
+阿蘭: （這下子虧大了。）
+<<show husband true>>
+<<teleport husband -300>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 怎麼顧的，豬都能跑掉？
+<<dim husband>>
+<<light Lan>>
+阿蘭: （這話我沒辦法回。）
+<<adjust_stat "health" -20>>
+<<adjust_stat "mood" -20>>
+<<adjust_favorability "husband" -10>>
+<<adjust_stat "pigSatisfaction" -30>>
+: <i>體力 -20／心情 -20／丈夫好感 -10／家畜滿足度 -30</i>
+<<show husband false>>
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_ChickenEscape
+---
+<<bg courtyard>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>雞舍那邊傳來異樣的聲音——她跑過去，門是開的。</i>
+阿蘭: 不好！雞跑出去了！
+
+<<set $dice1 = random_range(1, 6)>>
+<<set $dice2 = random_range(1, 6)>>
+<<set $dice_total = $dice1 + $dice2>>
+
+: <i>她追出去——</i>
+: <i>擲骰：{$dice1} + {$dice2} = {$dice_total}</i>
+
+<<if $dice_total >= 8>>
+    <<jump ChickenEscape_Good>>
+<<elseif $dice_total >= 5>>
+    <<jump ChickenEscape_Mid>>
+<<else>>
+    <<jump ChickenEscape_Bad>>
+<<endif>>
+===
+
+title: ChickenEscape_Good
+---
+: <i>跑了一圈，把牠趕回來了。還好沒跑遠。</i>
+阿蘭: （嚇死我了。雞舍的門要關緊一點咧。）
+<<adjust_stat "health" -10>>
+<<adjust_stat "chickenSatisfaction" -10>>
+: <i>體力 -10／家畜滿足度 -10</i>
+<<jump Scene_FreeRoam>>
+===
+
+title: ChickenEscape_Mid
+---
+: <i>追了好一段路，手腳都擦傷了，才把牠抓回來。</i>
+阿蘭: （這下子腰也痠了。）
+<<adjust_stat "health" -15>>
+<<adjust_stat "mood" -10>>
+<<adjust_stat "chickenSatisfaction" -20>>
+: <i>體力 -15／心情 -10／家畜滿足度 -20</i>
+<<jump Scene_FreeRoam>>
+===
+
+title: ChickenEscape_Bad
+---
+: <i>跑太遠了，問了幾個鄰居都說沒看見。天黑了才放棄找。</i>
+阿蘭: （這下子虧大了。）
+<<show husband true>>
+<<teleport husband -300>>
+<<dim Lan>>
+<<light husband>>
+丈夫: 怎麼顧的，雞都能跑掉？
+<<dim husband>>
+<<light Lan>>
+阿蘭: （這話我沒辦法回。）
+<<adjust_stat "health" -20>>
+<<adjust_stat "mood" -20>>
+<<adjust_favorability "husband" -10>>
+<<adjust_stat "chickenSatisfaction" -30>>
+: <i>體力 -20／心情 -20／丈夫好感 -10／家畜滿足度 -30</i>
+<<show husband false>>
+<<jump Scene_FreeRoam>>
+===
+
 title: Scene_DinnerLate
 ---
 <<bg kitchen>>
@@ -960,4 +1105,55 @@ title: Scene_ServeDinner
 <<set_flag "dinner_delivered">>
 <<adjust_stat "health" 20>>
 <<jump Scene_FreeRoam>>
+===
+
+title: Scene_DailySettlement
+---
+<<bg hall>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>夜深了，她坐在燈下把今天的帳算一遍。</i>
+
+阿蘭: （今天賣了 {get_daily_income()} 元，花了 {get_daily_expense()} 元。）
+
+<<show_daily_summary>>
+
+<<if get_stat("money") < 50>>
+    阿蘭: （錢快不夠了——還要撐幾天咧。）
+    <<adjust_stat "mood" -5>>
+<<else>>
+    阿蘭: （今天還過得去。）
+<<endif>>
+
+<<advance_to_next_day>>
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_FinalSettlement
+---
+<<bg hall>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>第三天結束了。她把所有的帳攤開來算。</i>
+
+<<calculate_final_settlement>>
+
+阿蘭: （柿餅這批，換了 {get_persimmon_income()} 元。）
+阿蘭: （豬賣了 {get_pig_income()} 元。）
+阿蘭: （地租田賦扣掉 120 元。）
+
+<<if get_final_balance() >= 0>>
+    阿蘭: （算下來還有剩——今年先撐過去了。）
+    <<adjust_stat "mood" 10>>
+<<else>>
+    阿蘭: （還差 {get_final_deficit()} 元……再想想辦法。總是有辦法的啊。）
+    <<adjust_stat "mood" -15>>
+<<endif>>
+
+: <i>燈快燒完了，她把帳本合起來。</i>
+: <i>明天又是新的一天。</i>
+
+<<trigger_ending>>
 ===
