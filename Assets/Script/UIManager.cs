@@ -26,6 +26,9 @@ public class UIManager : MonoBehaviour
     [Header("金錢 (Money)")]
     public TMP_Text moneyText;
 
+    [Header("天數 (Day)")]
+    public TMP_Text dayText;
+
     [Header("時間 (Time)")]
     public TMP_Text timeText;
 
@@ -54,7 +57,8 @@ public class UIManager : MonoBehaviour
             UpdateMoney((int)ResourceManager.GetStat("money"));
         }
 
-        // 2. 監聽時間變化
+        // 2. 監聽時間變化（時辰切換時順便更新天數，目前沒有獨立的「跨日」事件，
+        //    但時辰每兩小時一定會切換一次，借這個時機檢查天數就夠即時了）
         if (TimeManager.Instance != null)
         {
             TimeManager.Instance.OnTimePeriodChanged += UpdateTimeUI;
@@ -145,10 +149,64 @@ public class UIManager : MonoBehaviour
     private void UpdateTimeUI(string branchName)
     {
         if (timeText != null) timeText.text = $"{branchName}";
+        UpdateDayUI();
+    }
+
+    private void UpdateDayUI()
+    {
+        if (dayText == null) return;
+        int day = Mathf.RoundToInt(TimeManager.GetDayNumber());
+        dayText.text = $"第{ToChineseNumber(day)}天";
     }
 
     private void UpdateLocationUI(LocationManager.Location location)
     {
         if (locationText != null) locationText.text = location.ToString();
+    }
+
+    private static readonly string[] ChineseDigits = { "零", "一", "二", "三", "四", "五", "六", "七", "八", "九" };
+    private static readonly string[] ChineseUnits = { "", "十", "百", "千" };
+
+    /// <summary>
+    /// 把 0~9999 的整數轉成國字數字（例如 12 -> 十二，101 -> 一百零一）。
+    /// 天數理論上不會跑到萬位數，超出範圍就直接回傳阿拉伯數字當保底，不會噴錯。
+    /// </summary>
+    private static string ToChineseNumber(int number)
+    {
+        if (number <= 0) return ChineseDigits[0];
+        if (number >= 10000) return number.ToString();
+
+        string digits = number.ToString();
+        int len = digits.Length;
+        var sb = new System.Text.StringBuilder();
+        bool pendingZero = false;
+
+        for (int i = 0; i < len; i++)
+        {
+            int digit = digits[i] - '0';
+            int unitIndex = len - i - 1; // 0=個位、1=十位、2=百位、3=千位
+
+            if (digit == 0)
+            {
+                pendingZero = true;
+                continue;
+            }
+
+            if (pendingZero)
+            {
+                sb.Append(ChineseDigits[0]);
+                pendingZero = false;
+            }
+
+            // 開頭剛好是「十位」且數字是 1 時省略「一」：10 -> 十，12 -> 十二，而不是一十、一十二
+            bool omitLeadingOne = digit == 1 && unitIndex == 1 && i == 0;
+            if (!omitLeadingOne)
+            {
+                sb.Append(ChineseDigits[digit]);
+            }
+            sb.Append(ChineseUnits[unitIndex]);
+        }
+
+        return sb.ToString();
     }
 }

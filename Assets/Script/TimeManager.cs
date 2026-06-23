@@ -37,7 +37,7 @@ public class TimeManager : MonoBehaviour
     private bool hasTriggeredSatisfactionCheck = false;    // 11:00 家畜滿足度判定是否已執行過
     private bool hasTriggeredSettlement = false;           // 今天 21:00 結算是否已觸發過
 
-    private int dayNumber = 1; // Demo 共三天，第三天 21:00 觸發最終結算
+    private int dayNumber = 1; // 第三天會播 Scene_FinalSettlement，之後變成無限模式，繼續用每日小結算
 
     // 十二地支映射
     private readonly string[] earthlyBranches = {
@@ -130,17 +130,87 @@ public class TimeManager : MonoBehaviour
         else
         {
             consecutiveDaysWithoutWater++;
-            if (consecutiveDaysWithoutWater >= 3)
+            // 只在「剛好達到 3 天」那一刻觸發一次，避免一直沒燒水的話每天都重新排隊提醒
+            if (consecutiveDaysWithoutWater == 3)
             {
                 pendingNoWaterWarning = true;
             }
         }
 
+        // 必須在 ResetFixedFlags() 之前呼叫，否則 breakfast_delivered／dinner_delivered／collapsed_today
+        // 等旗標已經被清成「新的一天」的 false，回復量會永遠判定成「什麼都沒吃到」。
+        if (ResourceManager.Instance != null)
+        {
+            ResourceManager.Instance.ApplySleepRecovery();
+        }
+
         EventManager.ResetFixedFlags(); // 重置 breakfast_delivered／lunch_delivered／water_boiled_today／chicken_fed／pig_fed 等每日旗標
+
+        Debug.Log($"【TimeManager】===跨日=== 現在是 Day{dayNumber} {FormatClock()}｜連續沒燒水 {consecutiveDaysWithoutWater} 天／沒餵豬 {consecutiveDaysWithoutFeedingPig} 天／沒餵雞 {consecutiveDaysWithoutFeedingChicken} 天｜pendingNoWaterWarning={pendingNoWaterWarning}");
+    }
+
+    /// <summary>
+    /// 除錯用：把目前時間／天數/暫停狀態/所有「今天觸發過」旗標一次印出來，
+    /// 方便對照「為什麼又跳出同一個強制對話」。在 Inspector 右鍵這個元件即可呼叫。
+    /// </summary>
+    [ContextMenu("Debug: 顯示目前時間狀態")]
+    private void DebugPrintState()
+    {
+        Debug.Log(
+            $"【TimeManager除錯】Day{dayNumber} {FormatClock()}｜isGamePaused={isGamePaused}\n" +
+            $"hasTriggeredMorningLate={hasTriggeredMorningLate}／hasTriggeredDinnerLate={hasTriggeredDinnerLate}／hasTriggeredNoWaterWarning={hasTriggeredNoWaterWarning}\n" +
+            $"hasTriggeredSatisfactionCheck={hasTriggeredSatisfactionCheck}／hasTriggeredPigEscapeEvent={hasTriggeredPigEscapeEvent}／hasTriggeredChickenEscapeEvent={hasTriggeredChickenEscapeEvent}／hasTriggeredSettlement={hasTriggeredSettlement}\n" +
+            $"pendingNoWaterWarning={pendingNoWaterWarning}／pendingPigEscapeEvent={pendingPigEscapeEvent}／pendingChickenEscapeEvent={pendingChickenEscapeEvent}\n" +
+            $"連續沒燒水={consecutiveDaysWithoutWater}／連續沒餵豬={consecutiveDaysWithoutFeedingPig}／連續沒餵雞={consecutiveDaysWithoutFeedingChicken}"
+        );
+    }
+
+    /// <summary>
+    /// 把 currentTimeInSeconds 轉成好讀的 HH:MM，純粹給 Debug.Log 用。
+    /// </summary>
+    private string FormatClock()
+    {
+        int totalMinutes = Mathf.FloorToInt(currentTimeInSeconds / 60f);
+        int hour = (totalMinutes / 60) % 24;
+        int minute = totalMinutes % 60;
+        return $"{hour:00}:{minute:00}";
     }
 
     private void CheckForTimeEvents()
     {
+        // 體力倒下／強撐警告優先權最高：ResourceManager.AdjustStat 只會排隊（pending），
+        // 真正開對話一定要等這裡確認目前沒有別的對話在跑（Update 會跑到這裡就代表沒在暫停）才安全觸發。
+        if (ResourceManager.Instance != null && ResourceManager.Instance.ConsumePendingCollapse())
+        {
+            if (GameManager.Instance != null)
+            {
+                // 已經累倒了，今天就到這裡結束——其他「超時」類事件（早飯/晚飯遲到、沒燒水、
+                // 家畜跑出去）今天不用再補觸發了，標記成「今天已經處理過」直接取消。
+                hasTriggeredMorningLate = true;
+                hasTriggeredDinnerLate = true;
+                hasTriggeredNoWaterWarning = true;
+                hasTriggeredPigEscapeEvent = true;
+                hasTriggeredChickenEscapeEvent = true;
+                pendingNoWaterWarning = false;
+                pendingPigEscapeEvent = false;
+                pendingChickenEscapeEvent = false;
+
+                Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_Collapse");
+                GameManager.Instance.ForceStartDialogue("Scene_Collapse");
+                return;
+            }
+        }
+
+        if (ResourceManager.Instance != null && ResourceManager.Instance.ConsumePendingStaminaWarning())
+        {
+            if (GameManager.Instance != null)
+            {
+                Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_StaminaWarning");
+                GameManager.Instance.ForceStartDialogue("Scene_StaminaWarning");
+                return;
+            }
+        }
+
         if (!hasTriggeredMorningLate && IsTimeAfter(8, 0))
         {
             // 飯是否煮好、是否已經在灶房盛出、或是否已經端過早飯，三個都要排除才算「真的沒飯吃」：
@@ -155,7 +225,9 @@ public class TimeManager : MonoBehaviour
             {
                 if (GameManager.Instance != null)
                 {
+                    Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_MorningLate");
                     GameManager.Instance.ForceStartDialogue("Scene_MorningLate");
+                    return; // 一次只強制觸發一個對話，避免同一輪檢查裡被後面的事件（例如結算）把這個對話中斷、旗標來不及設定
                 }
             }
         }
@@ -170,7 +242,9 @@ public class TimeManager : MonoBehaviour
             {
                 if (GameManager.Instance != null)
                 {
+                    Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_DinnerLate");
                     GameManager.Instance.ForceStartDialogue("Scene_DinnerLate");
+                    return; // 同上：避免馬上被後面的結算檢查打斷，導致 Scene_DinnerLate 還沒跑到 <<set_flag "dinner_delivered">> 就被中止
                 }
             }
         }
@@ -181,7 +255,9 @@ public class TimeManager : MonoBehaviour
             pendingNoWaterWarning = false;
             if (GameManager.Instance != null)
             {
+                Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_NoWaterWarning");
                 GameManager.Instance.ForceStartDialogue("Scene_NoWaterWarning");
+                return; // 同上：一次只強制觸發一個對話
             }
         }
 
@@ -198,7 +274,8 @@ public class TimeManager : MonoBehaviour
             {
                 consecutiveDaysWithoutFeedingPig++;
                 ResourceManager.AdjustStat("pigSatisfaction", -10f);
-                if (consecutiveDaysWithoutFeedingPig >= 2)
+                // 同上：只在剛好達到 2 天那一刻排隊，避免一直沒餵的話每天都再排一次
+                if (consecutiveDaysWithoutFeedingPig == 2)
                 {
                     pendingPigEscapeEvent = true;
                 }
@@ -212,7 +289,8 @@ public class TimeManager : MonoBehaviour
             {
                 consecutiveDaysWithoutFeedingChicken++;
                 ResourceManager.AdjustStat("chickenSatisfaction", -10f);
-                if (consecutiveDaysWithoutFeedingChicken >= 2)
+                // 同上：只在剛好達到 2 天那一刻排隊，避免一直沒餵的話每天都再排一次
+                if (consecutiveDaysWithoutFeedingChicken == 2)
                 {
                     pendingChickenEscapeEvent = true;
                 }
@@ -228,7 +306,9 @@ public class TimeManager : MonoBehaviour
             pendingPigEscapeEvent = false;
             if (GameManager.Instance != null)
             {
+                Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_AnimalEscape");
                 GameManager.Instance.ForceStartDialogue("Scene_AnimalEscape");
+                return; // 同上：一次只強制觸發一個對話
             }
         }
 
@@ -238,17 +318,21 @@ public class TimeManager : MonoBehaviour
             pendingChickenEscapeEvent = false;
             if (GameManager.Instance != null)
             {
+                Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：Scene_ChickenEscape");
                 GameManager.Instance.ForceStartDialogue("Scene_ChickenEscape");
+                return; // 同上：一次只強制觸發一個對話
             }
         }
 
-        // 每天 21:00（亥時）結算：第三天觸發最終結算，其餘觸發每日小結算
+        // 每天 21:00（亥時）結算：每三天（Day3、6、9...）觸發一次週期結算（地租田賦／賣柿餅／賣豬），其餘是每日小結算
         if (!hasTriggeredSettlement && IsTimeAfter(21, 0))
         {
             hasTriggeredSettlement = true;
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.ForceStartDialogue(dayNumber < 3 ? "Scene_DailySettlement" : "Scene_FinalSettlement");
+                string settlementNode = IsPeriodicSettlementDay() ? "Scene_FinalSettlement" : "Scene_DailySettlement";
+                Debug.Log($"【TimeManager】Day{dayNumber} {FormatClock()} 觸發強制對話：{settlementNode}");
+                GameManager.Instance.ForceStartDialogue(settlementNode);
             }
         }
     }
@@ -330,6 +414,16 @@ public class TimeManager : MonoBehaviour
     [ContextMenu("Advance 1 Hour")]
     public void AdvanceOneHour()
     {
+        // 這兩個是純手動測試用的工具（Context Menu／無對應 Yarn 指令在用），
+        // 對話強制觸發中（isGamePaused）時直接擋掉，避免在對話卡著的時候連點，
+        // 偷偷跨過好幾天的午夜，導致 hasTriggered* 系列旗標在背景被重置好幾輪，
+        // 對話一播完馬上又因為「新的一天」而重新觸發一次，看起來像是同一天無限重複。
+        if (isGamePaused)
+        {
+            Debug.LogWarning("【TimeManager】目前有強制對話正在進行（isGamePaused），暫不推進時間，請先讓對話跑完。");
+            return;
+        }
+
         // 手動推進一個小時（3600 秒）
         currentTimeInSeconds += 3600f;
         if (currentTimeInSeconds >= 24f * 3600f)
@@ -344,6 +438,13 @@ public class TimeManager : MonoBehaviour
     [YarnCommand("advance_time")]
     public void AdvanceTime()
     {
+        // 同上：避免在強制對話進行中被連續呼叫，背景偷偷跨過好幾天
+        if (isGamePaused)
+        {
+            Debug.LogWarning("【TimeManager】目前有強制對話正在進行（isGamePaused），暫不推進時間，請先讓對話跑完。");
+            return;
+        }
+
         // 手動推進一個時段（2 小時）
         currentTimeInSeconds += 2f * 3600f;
         if (currentTimeInSeconds >= 24f * 3600f)
@@ -438,5 +539,25 @@ public class TimeManager : MonoBehaviour
     {
         if (Instance == null) return false;
         return Instance.currentTimeInSeconds >= hour * 3600f + minute * 60f;
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本查詢目前是第幾天。
+    /// </summary>
+    [YarnFunction("get_day_number")]
+    public static float GetDayNumber()
+    {
+        return Instance != null ? Instance.dayNumber : 1;
+    }
+
+    /// <summary>
+    /// 供 Yarn 腳本查詢今天是不是每三天一次的週期結算日（Day3、6、9...），
+    /// 該跳 Scene_FinalSettlement 還是 Scene_DailySettlement 都用這個判斷，避免在 .yarn 裡寫 % 運算。
+    /// 用法：<<if is_periodic_settlement_day()>>
+    /// </summary>
+    [YarnFunction("is_periodic_settlement_day")]
+    public static bool IsPeriodicSettlementDay()
+    {
+        return Instance != null && Instance.dayNumber % 3 == 0;
     }
 }

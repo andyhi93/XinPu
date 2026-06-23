@@ -453,12 +453,20 @@ public class KitchenMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// 跨日時呼叫：重置「這一輪盛飯／熄火」紀錄，讓新的一天可以重新煮早飯
+    /// 跨日時呼叫：重置「這一輪盛飯／熄火」紀錄，讓新的一天可以重新煮早飯。
+    /// isCooked／火力／燃料／進度也要一起清掉，否則跨日後 isCooked 殘留 true 會讓
+    /// is_kitchen_unfinished() 誤判成「昨天煮好的飯還沒盛」，新的一天打不開正常的食材選單。
     /// </summary>
     public void ResetDailyState()
     {
         hasServed = false;
         hasStoppedFire = false;
+        isCooked = false;
+        state = KitchenState.Unlit;
+        fireLevel = 0f;
+        fuelLevel = 0f;
+        cookProgress = 0f;
+        EventManager.SetFlag("kitchen_fire_lit", false);
     }
 
     /// <summary>

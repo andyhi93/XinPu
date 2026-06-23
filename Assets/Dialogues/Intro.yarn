@@ -95,6 +95,10 @@ title: Scene_Hall
 
 <<if has_flag("breakfast_delivered")>>
     阿蘭: （早飯已經端過了。）
+    -> 先忙別的，等到中午再送便當 <<if has_flag("breakfast_delivered") and not is_time_after(11, 0)>>
+        阿蘭: （飯送過了，便當要等中午才能送，先忙別的吧。）
+        <<set_time "午">>
+        <<jump Scene_FreeRoam>>
     -> 跟婆婆對話 <<if has_flag("lunch_delivered") and not has_flag("afternoon_hall_visited") and is_time_after(11, 0)>>
         <<jump Scene_AfternoonHall>>
     -> 回屋休息等天暗 <<if has_flag("lunch_delivered") and not is_time_after(17, 0)>>
@@ -102,12 +106,25 @@ title: Scene_Hall
         <<adjust_stat "health" 5>>
         <<set_time "酉">>
         <<jump Scene_FreeRoam>>
+    -> 今晚的事都做完了，先睡了 <<if has_flag("dinner_delivered") and not is_time_after(21, 0)>>
+        阿蘭: （晚飯也送了，今天就到這裡吧。）
+        <<adjust_stat "health" 5>>
+        <<set_time "亥">>
+        <<if is_periodic_settlement_day()>>
+            <<jump Scene_FinalSettlement>>
+        <<else>>
+            <<jump Scene_DailySettlement>>
+        <<endif>>
     -> 離開
         <<go_to_location 0>>
 <<elseif is_food_done() or is_food_served()>>
     阿蘭: （地瓜簽粥已經煮好了。）
     -> 端飯給大家吃
         <<jump Scene_DiningHall>>
+    -> 先忙別的，等到中午再送便當 <<if has_flag("breakfast_delivered") and not is_time_after(11, 0)>>
+        阿蘭: （飯送過了，便當要等中午才能送，先忙別的吧。）
+        <<set_time "午">>
+        <<jump Scene_FreeRoam>>
     -> 跟婆婆對話 <<if has_flag("lunch_delivered") and not has_flag("afternoon_hall_visited") and is_time_after(11, 0)>>
         <<jump Scene_AfternoonHall>>
     -> 回屋休息等天暗 <<if has_flag("lunch_delivered") and not is_time_after(17, 0)>>
@@ -115,10 +132,23 @@ title: Scene_Hall
         <<adjust_stat "health" 5>>
         <<set_time "酉">>
         <<jump Scene_FreeRoam>>
+    -> 今晚的事都做完了，先睡了 <<if has_flag("dinner_delivered") and not is_time_after(21, 0)>>
+        阿蘭: （晚飯也送了，今天就到這裡吧。）
+        <<adjust_stat "health" 5>>
+        <<set_time "亥">>
+        <<if is_periodic_settlement_day()>>
+            <<jump Scene_FinalSettlement>>
+        <<else>>
+            <<jump Scene_DailySettlement>>
+        <<endif>>
     -> 離開
         <<go_to_location 0>> // 0 代表三合院中心點
 <<else>>
     阿蘭: （飯還沒煮好，等下再來吧。）
+    -> 先忙別的，等到中午再送便當 <<if has_flag("breakfast_delivered") and not is_time_after(11, 0)>>
+        阿蘭: （飯送過了，便當要等中午才能送，先忙別的吧。）
+        <<set_time "午">>
+        <<jump Scene_FreeRoam>>
     -> 跟婆婆對話 <<if has_flag("lunch_delivered") and not has_flag("afternoon_hall_visited") and is_time_after(11, 0)>>
         <<jump Scene_AfternoonHall>>
     -> 回屋休息等天暗 <<if has_flag("lunch_delivered") and not is_time_after(17, 0)>>
@@ -126,6 +156,15 @@ title: Scene_Hall
         <<adjust_stat "health" 5>>
         <<set_time "酉">>
         <<jump Scene_FreeRoam>>
+    -> 今晚的事都做完了，先睡了 <<if has_flag("dinner_delivered") and not is_time_after(21, 0)>>
+        阿蘭: （晚飯也送了，今天就到這裡吧。）
+        <<adjust_stat "health" 5>>
+        <<set_time "亥">>
+        <<if is_periodic_settlement_day()>>
+            <<jump Scene_FinalSettlement>>
+        <<else>>
+            <<jump Scene_DailySettlement>>
+        <<endif>>
     -> 離開
         <<go_to_location 0>>
 <<endif>>
@@ -779,6 +818,10 @@ title: Scene_BoilWater
 
 title: Scene_NoWaterWarning
 ---
+<<if has_flag("no_water_warning_triggered")>>
+    <<jump Scene_FreeRoam>>
+<<endif>>
+<<set_flag "no_water_warning_triggered">>
 <<bg house>>
 <<show mother true>>
 <<teleport mother -300>>
@@ -845,6 +888,9 @@ title: PigPen_Loop
 
 title: Scene_MorningLate
 ---
+<<if has_flag("morning_late")>>
+    <<jump Scene_FreeRoam>>
+<<endif>>
 <<set_flag "morning_late">>
 <<bg kitchen>>
 <<show mother true>>
@@ -920,6 +966,7 @@ title: Scene_MorningLate_Hall
 <<adjust_stat "health" 10>>
 <<set_flag "breakfast_delivered">>
 <<show mother false>>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1123,6 +1170,7 @@ title: Scene_FireEvent
 <<set $dice1 = random_range(1, 6)>>
 <<set $dice2 = random_range(1, 6)>>
 <<set $dice_total = $dice1 + $dice2>>
+<<set $food_already_served = is_food_served()>>
 
 : <i>她抓起旁邊的濕布，拼命往火上壓——</i>
 : <i>擲骰：{$dice1} + {$dice2} = {$dice_total}</i>
@@ -1145,27 +1193,42 @@ title: FireEvent_Good
 <<adjust_item "firewood" -1>>
 : <i>體力 -10／柴薪 -1</i>
 <<set_flag "fire_extinguished">>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
 title: FireEvent_Mid
 ---
-: <i>火壓住了，但飯已經燒焦了一半。鍋底是黑的。</i>
-阿蘭: （這鍋沒辦法上桌了。）
-<<adjust_stat "health" -15>>
-<<adjust_stat "mood" -10>>
-<<adjust_item "firewood" -2>>
-<<set_flag "food_burnt">>
-: <i>體力 -15／心情 -10／柴薪 -2</i>
-: <i>今天的飯報廢，需要重煮或全家沒飯吃。</i>
+<<if $food_already_served>>
+    : <i>火壓住了。灶台燒黑了一塊，但飯已經端走了，沒有燒到。</i>
+    阿蘭: （好險，飯已經盛出去了。灶這邊清一清就好。）
+    <<adjust_stat "health" -15>>
+    <<adjust_stat "mood" -8>>
+    <<adjust_item "firewood" -2>>
+    : <i>體力 -15／心情 -8／柴薪 -2</i>
+<<else>>
+    : <i>火壓住了，但飯已經燒焦了一半。鍋底是黑的。</i>
+    阿蘭: （這鍋沒辦法上桌了。）
+    <<adjust_stat "health" -15>>
+    <<adjust_stat "mood" -10>>
+    <<adjust_item "firewood" -2>>
+    <<set_flag "food_burnt">>
+    : <i>體力 -15／心情 -10／柴薪 -2</i>
+    : <i>今天的飯報廢，需要重煮或全家沒飯吃。</i>
+<<endif>>
 <<set_flag "fire_extinguished">>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
 title: FireEvent_Bad
 ---
 : <i>火壓不住。她大叫，鄰居聽見跑過來幫忙，才把火撲滅。</i>
-阿蘭: （臉上烤得發燙，手也燙傷了一點。）
+<<if $food_already_served>>
+    阿蘭: （臉上烤得發燙，手也燙傷了一點。幸好飯已經端走了。）
+<<else>>
+    阿蘭: （臉上烤得發燙，手也燙傷了一點。）
+<<endif>>
 : <i>丈夫從外面衝進來，看著燒黑的灶台。</i>
 <<show husband true>>
 <<teleport husband -300>>
@@ -1175,16 +1238,26 @@ title: FireEvent_Bad
 <<dim husband>>
 <<light Lan>>
 阿蘭: （這話我沒辦法回。）
-<<adjust_stat "health" -25>>
-<<adjust_stat "mood" -20>>
-<<adjust_favorability "husband" -10>>
-<<adjust_favorability "grandmother" -15>>
-<<adjust_item "firewood" -3>>
-<<set_flag "food_burnt">>
-: <i>體力 -25／心情 -20／丈夫好感 -10／婆婆好感 -15／柴薪 -3</i>
-: <i>今天的飯報廢，鄰里都知道這件事了。</i>
+<<if $food_already_served>>
+    <<adjust_stat "health" -20>>
+    <<adjust_stat "mood" -15>>
+    <<adjust_favorability "husband" -8>>
+    <<adjust_favorability "grandmother" -10>>
+    <<adjust_item "firewood" -3>>
+    : <i>體力 -20／心情 -15／丈夫好感 -8／婆婆好感 -10／柴薪 -3</i>
+<<else>>
+    <<adjust_stat "health" -25>>
+    <<adjust_stat "mood" -20>>
+    <<adjust_favorability "husband" -10>>
+    <<adjust_favorability "grandmother" -15>>
+    <<adjust_item "firewood" -3>>
+    <<set_flag "food_burnt">>
+    : <i>體力 -25／心情 -20／丈夫好感 -10／婆婆好感 -15／柴薪 -3</i>
+    : <i>今天的飯報廢，鄰里都知道這件事了。</i>
+<<endif>>
 <<set_flag "fire_extinguished">>
 <<show husband false>>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1220,6 +1293,7 @@ title: AnimalEscape_Good
 <<adjust_stat "health" -10>>
 <<adjust_stat "pigSatisfaction" -10>>
 : <i>體力 -10／家畜滿足度 -10</i>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1231,6 +1305,7 @@ title: AnimalEscape_Mid
 <<adjust_stat "mood" -10>>
 <<adjust_stat "pigSatisfaction" -20>>
 : <i>體力 -15／心情 -10／家畜滿足度 -20</i>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1252,6 +1327,7 @@ title: AnimalEscape_Bad
 <<adjust_stat "pigSatisfaction" -30>>
 : <i>體力 -20／心情 -20／丈夫好感 -10／家畜滿足度 -30</i>
 <<show husband false>>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1298,6 +1374,7 @@ title: ChickenEscape_Mid
 <<adjust_stat "mood" -10>>
 <<adjust_stat "chickenSatisfaction" -20>>
 : <i>體力 -15／心情 -10／家畜滿足度 -20</i>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1319,11 +1396,16 @@ title: ChickenEscape_Bad
 <<adjust_stat "chickenSatisfaction" -30>>
 : <i>體力 -20／心情 -20／丈夫好感 -10／家畜滿足度 -30</i>
 <<show husband false>>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
 title: Scene_DinnerLate
 ---
+<<if has_flag("dinner_late_triggered")>>
+    <<jump Scene_FreeRoam>>
+<<endif>>
+<<set_flag "dinner_late_triggered">>
 <<bg kitchen>>
 <<show mother true>>
 <<teleport mother -300>>
@@ -1382,6 +1464,7 @@ title: Scene_DinnerLate_Hall
 <<adjust_stat "health" 10>>
 <<set_flag "dinner_delivered">>
 <<show mother false>>
+<<bg house>>
 <<jump Scene_FreeRoam>>
 ===
 
@@ -1393,6 +1476,49 @@ title: Scene_ServeDinner
 <<set_flag "dinner_delivered">>
 <<adjust_stat "health" 20>>
 <<jump Scene_FreeRoam>>
+===
+
+title: Scene_StaminaWarning
+---
+<<if has_flag("stamina_warning_shown")>>
+    <<jump Scene_FreeRoam>>
+<<endif>>
+<<set_flag "stamina_warning_shown">>
+<<teleport Lan 300>>
+<<light Lan>>
+
+阿蘭: （手開始抖了——不行，還有事情沒做。）
+: <i>她停下來靠著牆，深吸一口氣。</i>
+阿蘭: （撐著，再撐一下。）
+
+<<jump Scene_FreeRoam>>
+===
+
+title: Scene_Collapse
+---
+<<if has_flag("collapsed_today")>>
+    <<jump Scene_FreeRoam>>
+<<endif>>
+<<set_flag "collapsed_today">>
+<<bg courtyard>>
+<<teleport Lan 300>>
+<<light Lan>>
+
+: <i>腳一軟，她扶著廊道的柱子，才沒有倒下去。</i>
+阿蘭: （撐不住了。）
+: <i>她就這樣靠著柱子坐下來，眼前的曬場還有幾籃沒翻——</i>
+阿蘭: （等一下，等一下就好。）
+: <i>但「一下」變成了很久。天色慢慢暗了。</i>
+
+<<adjust_stat "mood" -10>>
+<<adjust_favorability "grandmother" -5>>
+<<set_time "亥">>
+<<bg house>>
+<<if is_periodic_settlement_day()>>
+    <<jump Scene_FinalSettlement>>
+<<else>>
+    <<jump Scene_DailySettlement>>
+<<endif>>
 ===
 
 title: Scene_DailySettlement
@@ -1435,7 +1561,7 @@ title: Scene_FinalSettlement
 <<teleport Lan 300>>
 <<light Lan>>
 
-: <i>第三天結束了。她把所有的帳攤開來算。</i>
+: <i>又是三天過去了。她把這三天的帳攤開來算。</i>
 
 <<calculate_final_settlement>>
 
@@ -1444,7 +1570,7 @@ title: Scene_FinalSettlement
 阿蘭: （地租田賦扣掉 120 元。）
 
 <<if get_final_balance() >= 0>>
-    阿蘭: （算下來還有剩——今年先撐過去了。）
+    阿蘭: （算下來還有剩——這三天先撐過去了。）
     <<adjust_stat "mood" 10>>
 <<else>>
     阿蘭: （還差 {get_final_deficit()} 元……再想想辦法。總是有辦法的啊。）
@@ -1455,6 +1581,6 @@ title: Scene_FinalSettlement
 : <i>明天又是新的一天。</i>
 
 <<trigger_ending>>
-<<bg house>>
-<<jump Scene_FreeRoam>>
+<<advance_to_next_day>>
+<<jump Scene_SleepWake>>
 ===

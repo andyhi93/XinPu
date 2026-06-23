@@ -9,6 +9,9 @@ public class ResourceManager : MonoBehaviour
 
     public enum FavorLevel { 差, 普通, 好 }
 
+    // 體力三階段：Normal 正常／Tired 疲憊（30 以下）／Critical 強撐（10 以下）／Collapsed 倒下（歸零）
+    public enum StaminaState { Normal, Tired, Critical, Collapsed }
+
     [Header("基礎數值")]
     [SerializeField] private int health = 100;
     [SerializeField] private int mood = 100;
@@ -31,9 +34,10 @@ public class ResourceManager : MonoBehaviour
     private int finalPigIncome = 0;
     private int finalBalance = 0;
 
-    [Header("Yarn 整合設定")]
-    [SerializeField] private string healthExhaustedNode = "HealthExhausted";
-    private DialogueRunner dialogueRunner;
+    // 體力強撐／倒下事件：等 TimeManager 確認目前沒有對話在跑（isGamePaused=false）才安全觸發，
+    // 避免在別的場景正在執行 <<adjust_stat>> 指令的當下，直接搶斷它去開新對話。
+    private bool pendingStaminaWarning = false;
+    private bool pendingCollapse = false;
 
     // 事件：提供給 UI 或其他系統監聽數值變化
     public event Action<string, object> OnStatChanged;
@@ -79,12 +83,6 @@ public class ResourceManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
-    {
-        // Unity 6 建議使用 FindFirstObjectByType
-        dialogueRunner = FindFirstObjectByType<DialogueRunner>();
-    }
-
     /// <summary>
     /// 調整指定數值，會自動限制在範圍內。
     /// </summary>
@@ -98,10 +96,30 @@ public class ResourceManager : MonoBehaviour
         switch (statName.ToLower())
         {
             case "health":
-                Instance.health = Mathf.Clamp(Instance.health + intAmount, 0, 100);
+            {
+                StaminaState stateBefore = Instance.GetStaminaState();
+
+                // 已經疲憊（含強撐／倒下）時，任何會消耗體力的動作都多扣 2 點
+                int healthDelta = intAmount;
+                if (intAmount < 0 && stateBefore != StaminaState.Normal)
+                {
+                    healthDelta -= 2;
+                }
+
+                Instance.health = Mathf.Clamp(Instance.health + healthDelta, 0, 100);
                 Instance.NotifyChange("health", Instance.health);
-                if (Instance.health <= 0) Instance.HandleHealthExhausted();
+
+                StaminaState stateAfter = Instance.GetStaminaState();
+                if (stateAfter == StaminaState.Collapsed && !EventManager.HasFlag("collapsed_today"))
+                {
+                    Instance.pendingCollapse = true;
+                }
+                else if (stateAfter == StaminaState.Critical && !EventManager.HasFlag("stamina_warning_shown"))
+                {
+                    Instance.pendingStaminaWarning = true;
+                }
                 break;
+            }
             case "mood":
                 Instance.mood = Mathf.Clamp(Instance.mood + intAmount, 0, 100);
                 Instance.NotifyChange("mood", Instance.mood);
@@ -196,19 +214,79 @@ public class ResourceManager : MonoBehaviour
         }
     }
 
-    private void HandleHealthExhausted()
+    /// <summary>
+    /// 依目前體力判斷三階段狀態。
+    /// </summary>
+    public StaminaState GetStaminaState()
     {
-        Debug.Log("體力歸零！觸發強制休息。");
-        if (dialogueRunner != null && !dialogueRunner.IsDialogueRunning)
+        if (health <= 0) return StaminaState.Collapsed;
+        if (health <= 10) return StaminaState.Critical;
+        if (health <= 30) return StaminaState.Tired;
+        return StaminaState.Normal;
+    }
+
+    /// <summary>
+    /// 供 TimeManager 在確認目前沒有對話在跑（安全時機）才呼叫，消耗掉「待觸發」的倒下事件。
+    /// 回傳 true 表示這次真的要去開 Scene_Collapse。
+    /// </summary>
+    public bool ConsumePendingCollapse()
+    {
+        if (!pendingCollapse) return false;
+        pendingCollapse = false;
+        return true;
+    }
+
+    /// <summary>
+    /// 同上，消耗「待觸發」的體力強撐警告。
+    /// </summary>
+    public bool ConsumePendingStaminaWarning()
+    {
+        if (!pendingStaminaWarning) return false;
+        pendingStaminaWarning = false;
+        return true;
+    }
+
+    /// <summary>
+    /// 跨日（睡一晚）回復體力／心情，依今天有沒有正常吃早晚飯、有沒有倒下決定回復量。
+    /// 必須在 TimeManager.HandleDayRollover() 重置每日旗標「之前」呼叫，
+    /// 否則 breakfast_delivered／dinner_delivered 等旗標已經被清成 false，讀不到「今天」的紀錄。
+    /// </summary>
+    public void ApplySleepRecovery()
+    {
+        bool hadBreakfast = EventManager.HasFlag("breakfast_delivered") && !EventManager.HasFlag("morning_late");
+        bool hadDinner = EventManager.HasFlag("dinner_delivered") && !EventManager.HasFlag("dinner_late_triggered");
+        bool collapsedToday = EventManager.HasFlag("collapsed_today");
+
+        int healthRecovery;
+        int moodRecovery;
+
+        if (collapsedToday)
         {
-            dialogueRunner.StartDialogue(healthExhaustedNode);
+            healthRecovery = 20;
+            moodRecovery = 5;
+        }
+        else if (hadBreakfast && hadDinner)
+        {
+            healthRecovery = 60;
+            moodRecovery = 30;
+        }
+        else if (hadBreakfast || hadDinner)
+        {
+            healthRecovery = 40;
+            moodRecovery = 20;
+        }
+        else
+        {
+            healthRecovery = 25;
+            moodRecovery = 10;
         }
 
-        // 邏輯副作用：自動跳過一個時段（2 小時）
-        if (TimeManager.Instance != null)
-        {
-            TimeManager.Instance.AdvanceTime();
-        }
+        health = Mathf.Clamp(health + healthRecovery, 0, 100);
+        mood = Mathf.Clamp(mood + moodRecovery, 0, 100);
+        NotifyChange("health", health);
+        NotifyChange("mood", mood);
+
+        Debug.Log($"【體力】睡眠回復：體力 +{healthRecovery}／心情 +{moodRecovery}（早飯準時:{hadBreakfast}／晚飯準時:{hadDinner}／昨天倒下:{collapsedToday}）");
     }
 
     private void NotifyChange(string statName, object value)
@@ -388,19 +466,23 @@ public class ResourceManager : MonoBehaviour
         Debug.Log($"【每日結算】收入 {Instance.dailyIncome} 元／支出 {Instance.dailyExpense} 元／目前身上 {Instance.money} 元。");
     }
 
-    // --- 第三天結算 ---
+    // --- 每三天一次的週期結算（地租田賦、賣柿餅、賣豬）---
 
     private const int FinalRentAndTax = 120; // 地租 80 + 田賦 40
 
     /// <summary>
     /// 計算柿餅與賣豬收入，扣除地租田賦後直接套用到 money。
+    /// 每三天觸發一次（見 TimeManager），柿餅賣掉後要把庫存清掉，
+    /// 否則下一輪三天結算會把同一批庫存再賣一次，變成無限刷錢。
     /// </summary>
     [YarnCommand("calculate_final_settlement")]
     public static void CalculateFinalSettlement()
     {
         if (Instance == null) return;
 
-        Instance.finalPersimmonIncome = Instance.GetIngredientCount("persimmon") * 3;
+        int persimmonCount = Instance.GetIngredientCount("persimmon");
+        Instance.finalPersimmonIncome = persimmonCount * 3;
+        AdjustItem("persimmon", -persimmonCount);
 
         if (Instance.pigSatisfaction >= 80) Instance.finalPigIncome = 200;
         else if (Instance.pigSatisfaction >= 60) Instance.finalPigIncome = 150;
@@ -426,15 +508,12 @@ public class ResourceManager : MonoBehaviour
     public static int GetFinalDeficit() => Instance != null ? Mathf.Max(0, -Instance.finalBalance) : 0;
 
     /// <summary>
-    /// Demo 結局：目前尚無正式結局畫面，先暫停遊戲時間並記錄 Log。
+    /// 每三天一次的週期結算播完時呼叫，目前只記錄 Log（尚無額外畫面），
+    /// 不會停住遊戲——遊戲會無限循環下去，每三天都會再播一次 Scene_FinalSettlement。
     /// </summary>
     [YarnCommand("trigger_ending")]
     public static void TriggerEnding()
     {
-        Debug.Log("【結算】Demo 三天結束，等待後續補上正式的結局畫面。");
-        if (TimeManager.Instance != null)
-        {
-            TimeManager.Instance.isGamePaused = true;
-        }
+        Debug.Log($"【結算】Day{TimeManager.GetDayNumber()} 三天週期結算播完，繼續無限模式。");
     }
 }
