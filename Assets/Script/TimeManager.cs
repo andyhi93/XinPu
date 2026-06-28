@@ -178,6 +178,16 @@ public class TimeManager : MonoBehaviour
 
     private void CheckForTimeEvents()
     {
+        // 強制事件只能在 FreeRoam 時跳出來，避免打斷正在開著的小遊戲/選單視窗
+        // （灶房選單、商店、豬欄等 GameState.Minigame 不會暫停 isGamePaused，
+        // 所以 Update() 仍然會跑到這裡——但這裡直接擋掉，等玩家關掉視窗回到
+        // FreeRoam 才補觸發；被擋住的這段時間裡，體力等數值仍會正常累積，
+        // 只是「跳出強制對話」這個動作本身延後到安全的時機才做）。
+        if (GameManager.Instance != null && GameManager.Instance.currentState != GameState.FreeRoam)
+        {
+            return;
+        }
+
         // 體力倒下／強撐警告優先權最高：ResourceManager.AdjustStat 只會排隊（pending），
         // 真正開對話一定要等這裡確認目前沒有別的對話在跑（Update 會跑到這裡就代表沒在暫停）才安全觸發。
         if (ResourceManager.Instance != null && ResourceManager.Instance.ConsumePendingCollapse())
