@@ -118,6 +118,11 @@ public class TimeManager : MonoBehaviour
             PigFoodMiniGame.Instance.ResetDailyState(); // 讓新的一天可以重新煮豬菜
         }
 
+        if (PersimmonMiniGame.Instance != null)
+        {
+            PersimmonMiniGame.Instance.ResetDailyState(); // 讓新的一天可以重新處理今天的柿子（庫存不受影響，留著等三天結算）
+        }
+
         if (ShoppingMenu.Instance != null)
         {
             ShoppingMenu.Instance.ResetDailyStock(); // 市場明天重新隨機上架

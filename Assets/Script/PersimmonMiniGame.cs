@@ -8,6 +8,8 @@ using TMPro;
 /// </summary>
 public class PersimmonMiniGame : MonoBehaviour
 {
+    public static PersimmonMiniGame Instance { get; private set; }
+
     [Header("遊戲設定")]
     [SerializeField] private int peelRequiredCount = 7;    // 需要按幾下才算削皮完成
     [SerializeField] private int stemRequiredCount = 4;    // 需要按幾下才算去蒂完成
@@ -43,7 +45,14 @@ public class PersimmonMiniGame : MonoBehaviour
 
     private void Awake()
     {
-        if (peelButton != null) 
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
+        if (peelButton != null)
         {
             peelButton.onClick.AddListener(OnPeelClick);
             peelButtonRect = peelButton.GetComponent<RectTransform>();
@@ -263,6 +272,16 @@ public class PersimmonMiniGame : MonoBehaviour
         // 重置為初始圖片
         UpdatePersimmonImage();
         UpdateUI();
+    }
+
+    /// <summary>
+    /// 跨日時呼叫：重置「今天處理過幾顆」的進度（currentPersimmonIndex／isGameComplete 等），
+    /// 讓新的一天可以重新處理 dailyTarget 顆。不會動到 ResourceManager 的柿子庫存——
+    /// 庫存要每天累加，等三天結算時才一次清空賣掉，這裡只重置「今天的小遊戲進度」。
+    /// </summary>
+    public void ResetDailyState()
+    {
+        InitializeGame();
     }
 
     public void HandleExit()
