@@ -47,6 +47,9 @@ public class EndingUIManager : MonoBehaviour
             TimeManager.Instance.isGamePaused = true;
         }
 
+        // 結算當天賣柿餅的收入、扣地租田賦，要在 DisplaySummaryLines 讀數值之前算好。
+        ResourceManager.CalculateEndingFinance();
+
         if (menuWindow != null) menuWindow.SetActive(true);
         DisplaySummaryLines();
     }
@@ -109,7 +112,13 @@ public class EndingUIManager : MonoBehaviour
         }
 
         lines.Add($"體力剩下 {(int)ResourceManager.GetStat("health")} ／ 心情 {(int)ResourceManager.GetStat("mood")}");
+
+        int persimmonIncome = ResourceManager.GetPersimmonIncome();
+        if (persimmonIncome > 0) lines.Add($"・柿餅賣了，得 {persimmonIncome} 元。");
+        lines.Add($"・今天要繳地租田賦，共 {ResourceManager.GetRentAndTax()} 元。");
+
         lines.Add($"今天的帳：收入 {ResourceManager.GetDailyIncome()} 元，支出 {ResourceManager.GetDailyExpense()} 元");
+        lines.Add($"身上剩下 {(int)ResourceManager.GetStat("money")} 元");
 
         return lines;
     }

@@ -73,6 +73,7 @@ public class EventManager : MonoBehaviour
         "afternoon_hall_visited",
         "town_looked_around",
         "laundry_done",
+        "kitchen_leave_hint_shown",
     };
 
     private Dictionary<string, bool> flags = new Dictionary<string, bool>();

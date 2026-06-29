@@ -10,6 +10,7 @@ public class TimeManager : MonoBehaviour
     [Header("時間設定")]
     [Tooltip("現實世界多少分鐘代表遊戲中的 24 小時。")]
     [SerializeField] private float dayLengthInMinutes = 9f;
+    public float DayLengthInMinutes => dayLengthInMinutes;
 
     [Header("狀態")]
     public bool isGamePaused = false;
@@ -447,6 +448,12 @@ public class TimeManager : MonoBehaviour
             HandleDayRollover();
         }
         UpdateBranchIndex();
+
+        if (KitchenMiniGame.Instance != null)
+        {
+            KitchenMiniGame.Instance.AdvanceByGameMinutes(60f);
+        }
+
         Debug.Log("【TimeManager】已手動推進 1 小時");
     }
 
@@ -468,6 +475,11 @@ public class TimeManager : MonoBehaviour
             HandleDayRollover();
         }
         UpdateBranchIndex();
+
+        if (KitchenMiniGame.Instance != null)
+        {
+            KitchenMiniGame.Instance.AdvanceByGameMinutes(120f);
+        }
     }
 
     /// <summary>
@@ -484,6 +496,12 @@ public class TimeManager : MonoBehaviour
             Instance.HandleDayRollover();
         }
         Instance.UpdateBranchIndex();
+
+        // 灶上的火不會因為玩家在做別的事而停下來，這段跳過的遊戲時間要讓廚房小遊戲補跑對應的火力／燃料／烹煮進度
+        if (KitchenMiniGame.Instance != null)
+        {
+            KitchenMiniGame.Instance.AdvanceByGameMinutes(minutes);
+        }
     }
 
     /// <summary>

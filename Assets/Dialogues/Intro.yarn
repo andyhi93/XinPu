@@ -751,6 +751,12 @@ title: Scene_ConfirmCookRice
     <<jump Scene_FreeRoam>>
 ===
 
+title: Scene_KitchenLeaveHint
+---
+阿蘭: （火點上了，等它滾就好，先去做別的吧。）
+<<jump Scene_FreeRoam>>
+===
+
 title: Scene_CookPigFood
 ---
 阿蘭: （煮豬菜要用 1 份地瓜葉、1 份柴薪，確定要煮嗎？）
@@ -1166,24 +1172,48 @@ title: Scene_FireEvent
 <<teleport Lan 300>>
 <<light Lan>>
 
-: <i>灶房裡傳來焦味。她走進去——火苗已經竄上來了。</i>
-阿蘭: 不好！
+: <i>灶上的火，這麼久都沒有人去看了。</i>
+阿蘭: （糟了，火還沒熄……）
 
 <<set $dice1 = random_range(1, 6)>>
 <<set $dice2 = random_range(1, 6)>>
 <<set $dice_total = $dice1 + $dice2>>
 <<set $food_already_served = is_food_served()>>
 
-: <i>她抓起旁邊的濕布，拼命往火上壓——</i>
+: <i>她趕緊往灶房跑去——</i>
 : <i>擲骰：{$dice1} + {$dice2} = {$dice_total}</i>
 
-<<if $dice_total >= 8>>
+<<if $dice_total >= 10>>
+    <<jump FireEvent_Scolded>>
+<<elseif $dice_total >= 7>>
     <<jump FireEvent_Good>>
-<<elseif $dice_total >= 5>>
+<<elseif $dice_total >= 4>>
     <<jump FireEvent_Mid>>
 <<else>>
     <<jump FireEvent_Bad>>
 <<endif>>
+===
+
+title: FireEvent_Scolded
+---
+: <i>火還亮著，灶台跟鍋都好好的——婆婆先一步看到，皺著眉把柴撥開、壓熄了火。</i>
+<<show mother true>>
+<<teleport mother -300>>
+<<dim Lan>>
+<<light mother>>
+婆婆: 灶上的火還不去看？也不怕燒到自己！
+<<dim mother>>
+<<light Lan>>
+阿蘭: （是，我馬上去看，對不起。）
+
+<<adjust_stat "mood" -5>>
+<<adjust_favorability "grandmother" -3>>
+: <i>心情 -5／婆婆好感 -3</i>
+
+<<set_flag "fire_extinguished">>
+<<show mother false>>
+<<bg house>>
+<<jump Scene_FreeRoam>>
 ===
 
 title: FireEvent_Good

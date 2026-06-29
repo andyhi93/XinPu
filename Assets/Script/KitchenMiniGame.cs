@@ -103,7 +103,7 @@ public class KitchenMiniGame : MonoBehaviour
         }
 
         // 不論視窗是否開啟，邏輯（火力、燃料、進度）都持續更新
-        UpdateGameLogic();
+        AdvanceCookingSimulation(Time.deltaTime);
         CheckFireTimer();
 
         // 只有視窗開啟時，才更新 UI 表現以節省效能
@@ -114,9 +114,13 @@ public class KitchenMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// 處理遊戲邏輯更新（火力下降、燃料消耗、進度累積）
+    /// 處理遊戲邏輯更新（火力下降、燃料消耗、進度累積）。
+    /// 改成接受明確的 deltaSeconds 參數，而不是直接讀 Time.deltaTime，
+    /// 這樣同一套公式才能同時供 Update()（每幀真實時間）跟 AdvanceByGameMinutes()
+    /// （玩家不在小遊戲畫面、靠 advance_time_minutes 跳過遊戲時間時）共用，
+    /// 行為完全一致，不會有「離開小遊戲畫面時間就不算」的落差。
     /// </summary>
-    private void UpdateGameLogic()
+    private void AdvanceCookingSimulation(float deltaSeconds)
     {
         // 只有在暖火或烹煮中才執行自動衰減邏輯
         if (state != KitchenState.Warming && state != KitchenState.Cooking) return;
@@ -127,7 +131,7 @@ public class KitchenMiniGame : MonoBehaviour
         else if (fireLevel < 75) fuelDrainMultiplier = 1.0f;
         else fuelDrainMultiplier = 1.5f;
 
-        fuelLevel -= fuelDrainRate * fuelDrainMultiplier * Time.deltaTime;
+        fuelLevel -= fuelDrainRate * fuelDrainMultiplier * deltaSeconds;
         fuelLevel = Mathf.Max(0, fuelLevel);
 
         // --- 2. 計算火力衰退 (燃料影響火力) ---
@@ -137,7 +141,7 @@ public class KitchenMiniGame : MonoBehaviour
         else if (fuelLevel <= 50) fireDecayMultiplier = 2.0f;
         else fireDecayMultiplier = 1.0f;
 
-        fireLevel -= fireDecayRate * fireDecayMultiplier * Time.deltaTime;
+        fireLevel -= fireDecayRate * fireDecayMultiplier * deltaSeconds;
         fireLevel = Mathf.Max(0, fireLevel);
 
         // --- 3. 檢查熄火條件 ---
@@ -163,12 +167,12 @@ public class KitchenMiniGame : MonoBehaviour
                 if (fireLevel >= overheatThreshold)
                 {
                     // 過熱區間：進度推行較快（1.3倍）
-                    cookProgress += progressSpeed * 1.3f * Time.deltaTime;
+                    cookProgress += progressSpeed * 1.3f * deltaSeconds;
                 }
                 else if (fireLevel >= warmThreshold)
                 {
                     // 正常區間：進度正常推行
-                    cookProgress += progressSpeed * Time.deltaTime;
+                    cookProgress += progressSpeed * deltaSeconds;
                 }
 
                 // 檢查是否完成
@@ -181,6 +185,35 @@ public class KitchenMiniGame : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// 供 TimeManager 在 &lt;&lt;advance_time_minutes&gt;&gt; 等直接跳過遊戲時間的時機呼叫，
+    /// 讓灶上的火力／燃料／烹煮進度跟著「補跑」對應的量——玩家離開小遊戲畫面去做別的事，
+    /// 火不會因此停下來，依然照原本的速率燒、燒乾燃料，甚至煮好或自然熄滅。
+    /// 換算邏輯：用跟 TimeManager.Update() 完全相同的「現實秒數／遊戲秒數」比例，
+    /// 反推這段遊戲分鐘原本對應多少現實秒數，再用跟 Update() 一樣的公式分段補算，
+    /// 避免一次性大步距跳過火力／燃料的衰退倍率區間，造成跟逐幀模擬的結果不一致。
+    /// </summary>
+    public void AdvanceByGameMinutes(float gameMinutes)
+    {
+        if (state != KitchenState.Warming && state != KitchenState.Cooking) return;
+        if (gameMinutes <= 0f || TimeManager.Instance == null) return;
+
+        float realSecondsPerGameMinute = (TimeManager.Instance.DayLengthInMinutes * 60f) / (24f * 60f);
+        float remainingRealSeconds = gameMinutes * realSecondsPerGameMinute;
+
+        const float stepSeconds = 0.5f; // 用小步距分段模擬，跟逐幀 Update() 的精細度接近
+        while (remainingRealSeconds > 0f && (state == KitchenState.Warming || state == KitchenState.Cooking))
+        {
+            float step = Mathf.Min(stepSeconds, remainingRealSeconds);
+            AdvanceCookingSimulation(step);
+            remainingRealSeconds -= step;
+        }
+
+        // 時間已經跳到最終值，這裡用最新時間補查一次著火計時器，
+        // 避免「煮好且超過 1 小時沒回來關火」要等到下一個真實畫面幀才被偵測到。
+        CheckFireTimer();
     }
 
     /// <summary>
@@ -557,7 +590,8 @@ public class KitchenMiniGame : MonoBehaviour
     }
 
     /// <summary>
-    /// 退出按鈕點擊事件，僅隱藏介面，不重置狀態
+    /// 退出按鈕點擊事件，僅隱藏介面，不重置狀態。
+    /// 火還在燒的狀態下離開，今天第一次的話補一句提示，讓玩家知道可以放著火不管去做別的事。
     /// </summary>
     public void OnClickExit()
     {
@@ -566,10 +600,18 @@ public class KitchenMiniGame : MonoBehaviour
             kitchenGame.SetActive(false);
         }
 
+        bool isFireBurning = state == KitchenState.Warming || state == KitchenState.Cooking;
+
         // 通知 GameManager 關閉小遊戲並返回三合院
         if (GameManager.Instance != null)
         {
             GameManager.Instance.CloseKitchenGame();
+
+            if (isFireBurning && !EventManager.HasFlag("kitchen_leave_hint_shown"))
+            {
+                EventManager.SetFlag("kitchen_leave_hint_shown", true);
+                GameManager.Instance.StartDialogue("Scene_KitchenLeaveHint");
+            }
         }
     }
 }

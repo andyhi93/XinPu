@@ -508,6 +508,30 @@ public class ResourceManager : MonoBehaviour
     public static int GetFinalDeficit() => Instance != null ? Mathf.Max(0, -Instance.finalBalance) : 0;
 
     /// <summary>
+    /// 結算用：賣柿餅收入 + 地租田賦扣款。
+    /// 原本是每三天一次的週期結算（連同賣豬，見上面的 CalculateFinalSettlement），
+    /// 現在遊戲改成只玩一天，固定在 EndingUIManager 顯示結算面板時呼叫一次；
+    /// 賣豬代表的是長期飼養收益，跟單日流程不搭，這裡不計算。
+    /// 沿用同一套 finalPersimmonIncome／get_persimmon_income，柿餅賣掉後要清空庫存，避免重複結算。
+    /// </summary>
+    public static void CalculateEndingFinance()
+    {
+        if (Instance == null) return;
+
+        int persimmonCount = Instance.GetIngredientCount("persimmon");
+        Instance.finalPersimmonIncome = persimmonCount * 3;
+        AdjustItem("persimmon", -persimmonCount);
+        AdjustStat("money", Instance.finalPersimmonIncome);
+
+        AdjustStat("money", -FinalRentAndTax);
+    }
+
+    /// <summary>
+    /// 供 EndingUIManager 顯示固定的地租田賦金額（地租 80 + 田賦 40）。
+    /// </summary>
+    public static int GetRentAndTax() => FinalRentAndTax;
+
+    /// <summary>
     /// 每三天一次的週期結算播完時呼叫，目前只記錄 Log（尚無額外畫面），
     /// 不會停住遊戲——遊戲會無限循環下去，每三天都會再播一次 Scene_FinalSettlement。
     /// </summary>
