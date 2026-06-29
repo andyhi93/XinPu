@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Yarn.Unity;
 
 /// <summary>
@@ -26,6 +27,7 @@ public class GameManager : MonoBehaviour
     public KitchenMenu kitchenMenu;         // 在 Inspector 中拖入
     public PigFoodMiniGame pigFoodGame;     // 在 Inspector 中拖入
     public ShoppingMenu shoppingMenu;       // 在 Inspector 中拖入
+    public EndingUIManager endingUIManager; // 在 Inspector 中拖入
 
     [Header("對話 UI")]
     [Tooltip("拖入 'Dialogue System (1) Variant' 底下的 'Canvas' 子物件。\n" +
@@ -81,6 +83,7 @@ public class GameManager : MonoBehaviour
             dialogueRunner.AddCommandHandler("open_kitchen", OpenKitchenGame);
             dialogueRunner.AddCommandHandler("open_pig_food", OpenPigFoodGame);
             dialogueRunner.AddCommandHandler("open_shop", OpenShoppingMenu);
+            dialogueRunner.AddCommandHandler("show_ending_ui", ShowEndingUI);
 
             dialogueRunner.AddFunction("is_pig_food_done", () => pigFoodGame != null && pigFoodGame.IsPigFoodDone());
             dialogueRunner.AddFunction("is_pig_food_cooking", () => pigFoodGame != null && pigFoodGame.IsPigFoodCooking());
@@ -290,6 +293,19 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 供 Yarn 指令 <<show_ending_ui>> 使用：顯示結算/結局面板。
+    /// 切換 GameState、暫停時間都交給 EndingUIManager.ShowEndingPanel() 內部處理。
+    /// </summary>
+    public void ShowEndingUI()
+    {
+        if (endingUIManager != null)
+        {
+            Debug.Log("【GameManager】顯示結算/結局面板。");
+            endingUIManager.ShowEndingPanel();
+        }
+    }
+
+    /// <summary>
     /// 供 Yarn 指令使用：從 Scene_TownMenu 開啟市場 UI，跟 open_shop 的差別只在於
     /// 關閉後要回到 Scene_TownMenu，而不是直接跳回三合院。
     /// </summary>
@@ -431,4 +447,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 重新開始：GameManager／ResourceManager／TimeManager／EventManager／LocationManager／AudioManager
+    /// 都是跨場景持續存在的 singleton（DontDestroyOnLoad），單純 LoadScene 並不會重置它們身上的數值/旗標。
+    /// 所以要先把這些全部摧毀，重新載入場景時才會用場景裡存的初始值建立全新的乾淨實例。
+    /// 由 EndingUIManager 的「重新遊玩」按鈕呼叫。
+    /// </summary>
+    public static void RestartGame()
+    {
+        if (ResourceManager.Instance != null) Destroy(ResourceManager.Instance.gameObject);
+        if (TimeManager.Instance != null) Destroy(TimeManager.Instance.gameObject);
+        if (EventManager.Instance != null) Destroy(EventManager.Instance.gameObject);
+        if (LocationManager.Instance != null) Destroy(LocationManager.Instance.gameObject);
+        if (AudioManager.Instance != null) Destroy(AudioManager.Instance.gameObject);
+        if (Instance != null) Destroy(Instance.gameObject);
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 }

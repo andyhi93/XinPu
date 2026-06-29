@@ -69,6 +69,7 @@ public class EventManager : MonoBehaviour
         "no_water_warning_triggered",
         "stamina_warning_shown",
         "collapsed_today",
+        "firewood_picked_up_today",
         "afternoon_hall_visited",
         "town_looked_around",
         "laundry_done",

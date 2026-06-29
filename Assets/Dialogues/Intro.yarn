@@ -1023,6 +1023,7 @@ title: Scene_Road_ToTown
 -> 順手撿些柴帶著
     阿蘭: （空手是浪費。）
     <<adjust_item "firewood" 3>>
+    <<set_flag "firewood_picked_up_today">>
     : <i>撿了幾把枯枝綁好，順手提著。</i>
     <<jump Scene_TownMenu>>
 -> 直接走，不耽誤時間
@@ -1063,6 +1064,7 @@ title: Scene_Road_Home
 -> 順手撿些柴帶著
     阿蘭: （空手是浪費。）
     <<adjust_item "firewood" 3>>
+    <<set_flag "firewood_picked_up_today">>
     : <i>撿了幾把枯枝綁好，順手提著。</i>
     <<jump Scene_FreeRoam>>
 -> 直接走，不耽誤時間
@@ -1528,20 +1530,9 @@ title: Scene_DailySettlement
 <<light Lan>>
 
 : <i>夜深了，她坐在燈下把今天的帳算一遍。</i>
+阿蘭: （今天就這樣過去了。）
 
-阿蘭: （今天賣了 {get_daily_income()} 元，花了 {get_daily_expense()} 元。）
-
-<<show_daily_summary>>
-
-<<if get_stat("money") < 50>>
-    阿蘭: （錢快不夠了——還要撐幾天咧。）
-    <<adjust_stat "mood" -5>>
-<<else>>
-    阿蘭: （今天還過得去。）
-<<endif>>
-
-<<advance_to_next_day>>
-<<jump Scene_SleepWake>>
+<<show_ending_ui>>
 ===
 
 title: Scene_SleepWake
